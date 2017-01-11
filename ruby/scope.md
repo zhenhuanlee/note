@@ -1,3 +1,5 @@
+原文：[Understanding Scope in
+Ruby](https://www.sitepoint.com/understanding-scope-in-ruby/)
 # 作用域
 ### Ruby Variable Scope
 + Class variable(@@): 当前类和子类有效，外部无效
@@ -5,6 +7,7 @@
   只在特定的对象中有效，贯穿所有的类的实例的方法，定义的类中无效
 + Global variable($): 作用域为整个项目
 + Local variable: 取决于所在位置
+
 ![scope](../assets/variable-scope-ruby.jpg)
 
 ### When is a local variable in scope(什么时候一个局部变量是在作用域中的？)
