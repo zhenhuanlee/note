@@ -4,13 +4,13 @@ For Python 3
 ## 基础
 - 整型只有 int，没有long
 - 双引号和单引号完全相同
-- 用三引号来指定多个字符串 '''  or  """
+- 用三引号来指定多行字符串 '''  or  """
 ```python
-''' 这事一段多行字符串，这事他的第一行
+""" 这是一段多行字符串，这是他的第一行
 This is the second line.
 "What's your name?," I asked.
 He said "Bond, James Bond."
-'''
+"""
 ```
 - 字符串是不可变的，且没有`char`类型
 - format
@@ -113,6 +113,7 @@ else:
 print('Done')
 ```
 > 没有`switch`，在某些情况下，使用字典能更快的完成
+
 - for
 ```python
 for i in range(1, 5):
