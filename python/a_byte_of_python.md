@@ -129,3 +129,99 @@ def say_hello():
 
 sya_hello()  # 调用函数
 ```
+
+## 函数参数
+术语：
+- 在定义函数时给定的名称称作"形参"（parameters）
+- 在调用函数时你所提供给函数的值称作"实参"（Arguments）
+
+## 局部变量
+所有变量的作用域是它们被定义的块，从定义他们的名字的定义点开始 
+
+## `global`语句
+可以使用函数之外的变量的值，但是应该被避免
+```python
+x = 50
+def func():
+  global x
+
+  print('x is', x)
+  x = 2
+  print('Changed global x to', x)
+
+func()
+print('Value of x is', x)
+```
+## 默认参数值
+```python
+def say(message, times=1):
+  print(message * times)
+
+say('Hello')
+say('world', 5)
+```
+
+## 关键字参数
+只对其中的一些进行指定
+```python
+def func(a, b=5, c=10):
+  print('a is', a, 'and b is', b, 'and c is', c)
+
+func(3, 7)
+func(25, c=24)
+func(c=50, a=100)
+```
+## 可变参数
+不限制函数的参数个数,通过`*`来实现
+```python
+def tatal(a=5, *numbers, **phonebook):
+  print('a', a)
+
+  # 遍历元组中所有数据
+  for single_item in numbers:
+    print('single item', single_item)
+  
+  # 遍历字典中所有项目
+  for first_part, second_part in phonebook.items():
+    print(first_part, second_part)
+
+print(total(10, 1, 2, 3, Jack=123, Jhon=2231, Inge=123))
+```
+## return
+```python
+def maxium:
+  if x > y:
+    return x
+  elif x = y:
+    return 'The numbers are equal'
+  else:
+    return y
+
+print(maxium(2, 3))
+```
+如果只是`return`相当于`return None`
+每一个函数都在其末尾隐藏了一个`return None`
+`pass`语句用于指示一个没有内容的语句块
+
+## DocStrings
+文档字符串(Document Strings)
+用于更好的记录程序，并让其更加容易理解
+可以通过函数来获取文档
+```python
+def print_max(x, y):
+  '''Prints the maxium of two numbers.
+  
+  The two numbers must be integer.'''
+  # 如果可能将其转换为整数类型
+  x = int(x)
+  y = int(y)
+  if x > y:
+    print(x, 'is maxium')
+  else:
+    print(y, 'is maxium')
+
+print_max(3, 5)
+print(print_max.__doc__)
+```
+约定：第一行以某一个大写字母开始，以句号结尾。第二行为空行。第三行是任何详细的解释说明。
+文档还可以`help(print_max)`
