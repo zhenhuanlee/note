@@ -290,15 +290,14 @@ import mymodule
 from mymodule import say_hi, __version
 
 from mymodule import *
-# 会引入 say_hi 等所有公共名称，但是不会引入 __version__
-名称，因为后者以双下划线开头
+# 会引入 say_hi 等所有公共名称，但是不会引入 __version__，因为后者以双下划线开头
 # 尽量避免使用from..import 这种格式
 ```
 ### `dir`函数
 `dir()`能够返回由对象所定义的名称列表，如果这一对象是一个模块，则该列表会包含函数内所定义的函数、类与变量
 该函数接受参数，如果参数是模块名称，函数将返回这一指定模块的名称列表。
 如果没有提供参数，函数将返回当前模块的名称列表。
-```python3
+```python
 import sys
 
 # 输出 sys 模块中的属性名称
@@ -339,4 +338,290 @@ dir()
       - madagascar/
         - __init__.py
         - bar.py
+```
+## 数据结构
+用来存储一系列相关数据的集合
+Python 有四中内置的数据结构--列表(List)、元组(Tuple)、字典(Dictionary)、集合(Set)
+### 列表(List)
+有序项目的集合
+```python
+# this is my shop list
+shoplist = ['apple', 'mongo', 'carrot', 'banana']
+
+print('I have', len(shoplist), 'items to purchase.')
+
+print('These items are:', end=' ')
+from item in shoplist:
+  print(item, end=' ')
+
+shoplist.append('rice')
+shoplist.sort()
+
+olditem = shoplist[0]
+del shoplist[0]
+
+```
+### 元组(Tuple)
+- 元组同时也是一个序列
+- 用于将多个对象保存到一起，可以近似的看作低配列表
+- 元组的一大特征类似于字符串，他们是不可变的
+- 元组通常用于保证某一语句或某一用户定义的函数可以安全的采用一组数值，意即元组内的数值不会改变
+```python
+zoo = ('python', 'elephant', 'penguin')
+
+# 括号是可选的，但是推荐用括号
+new_zoo = 'monkey', 'camel', zoo
+
+new_zoo[2][0]
+
+# 如果一个元组只有一个项目
+singleton = (2, )
+```
+### 字典(Dictionary)
+- 字典中的成对的键值-值对不会以任何方式进行排序，如果要，只能在使用它们之前进行排序
+```python
+ab = {
+  'Swaroop': 'swaroop@swaroopch.com',
+  'Larry': 'larry@wall.org',
+  'Matsumoto': 'matz@ruby-lang.org',
+  'Spammer': 'spammer@hotmail.com'
+}
+
+print("Swaroop's address is", ab['Swaroop'])
+
+# 删除
+del ab['Spammer']
+
+for name, address in ab.items():
+  print('Contact {} at {}'.format(name, address))
+
+# 添加一对
+ab['Guido'] = 'guido@python.org'
+
+# 判断
+if 'Guido' in ab:
+  print("\nGuido's address is", ab['Guido'])
+```
+### 序列
+列表、元组、字符串都可以看作序列(Sequence)的某种表现形式
+- 序列的主要功能是资格测试(Membership Test)
+  - `in`与`not in`表达式
+  - 索引操作
+列表、元组、字符串都拥有一种切片(Slicing)运算符，它能够允许我们序列中的某段切片
+```python
+shoplist = ['apple', 'mongo', 'carrot']
+name = 'swroop'
+
+# slice on a list
+# 包含起始位置，但不包含结束位置
+>>> shoplist[0:2]
+['apple', 'mongo']
+>>> oplist[:2]
+['apple', 'mongo']
+>>> shoplist[0:]
+['apple', 'mongo', 'carrot']
+
+# slice on a string
+# 同上
+>>> name[0:2]
+'sw'
+
+# 可以提供第三个参数表示步长，默认1
+>>> shoplist = ['apple', 'mango', 'carrot', 'banana']
+>>> shoplist[::1]
+['apple', 'mango', 'carrot', 'banana']
+>>> shoplist[::2]
+['apple', 'carrot']
+>>> shoplist[::-1]
+['banana', 'carrot', 'mongo', 'apple']
+```
+### 集合(Set)
+是简单对象的无序集合(Collection)。
+通过集合可以测试某些对象的资格或情况，检查它们是否是其他集合的子集，找两个集合的交集等
+```python
+>>> bri = set(['brazil', 'russia', 'india'])
+>>> bri_new = {'brazil', 'russia', 'india'}
+>>> bri == bri_new
+True
+>>> 'india' in bri
+True
+>>> bric = bri.copy()
+>>> bric.add('china')
+>>> bric.issuperset(bri)
+True
+>>> bri.remove('russia')
+>>> bri & bric
+{'brazil', 'india'}
+```
+### 引用
+当你创建了一个对象，并将其分配给某个变量时，变量只会查阅(Refer)某个对象，并且它也不会代表对象本身
+```python
+shoplist = ['apple', 'mango', 'carrot', 'banana']
+mylist = shoplist
+del shoplist[0]
+mylist == shoplist    # True
+
+mylist = shoplist[:]
+del mylist[0]
+mylist == shoplist   # False
+```
+如果想创建一份侏儒序列等复杂对象的副本(而非整数这种简单的对象(object))，必须使用切片操作来创作副本
+简单的赋值，都将"查阅"
+
+## 面向对象编程
+### self
+类方法与普通函数只有一种特定的区别--前者必须有一个额外的名字，这个名字必须添加到参数列表的开头，但是你不用在调用这个功能时为这个参数赋值，Python会为它提供。这种特定的变量引用的是对象本身，按照惯例，它被赋予`self`这一名称
+> Python 中的`self`相当于C++中的指针以及Java与C#中的`this`指针
+如：有个`MyClass`类，这个类有个`myobject`实例，当调用这个对象的方法
+`myboject.method(arg1, arg2)`时，Python会自动将其转换成`MyClass.method(myobject,
+arg1, arg2)`--这就是`self`的全部特殊之处所在
+
+这同时意味着，如果有一个没有参数的功能，你依旧必须拥有一个参数--`self`
+
+### 类
+```python
+class Person:
+  pass  # 一个空的代代码块
+
+p = Person()
+print(p)
+```
+
+### 方法
+```python
+class Person:
+  def say_hi(self):
+    print('Hello, how are you?')
+
+p = Person()
+p.say_hi()
+```
+
+### `__init__`方法
+会在类的对象被实例化(Instantiated)的时候立即运行
+```python
+class Person:
+  def __init__(self, name):
+    self.name = name
+
+  def say_hi(self):
+    print('Hello', self.name)
+
+p = Person('Swaroop')
+p.say_hi()
+# Hello Swaroop
+```
+
+### 类变量与对象变量
+- 类变量(Class
+  Variable)是共享的--他们可以被属于该类的所有实例访问。只有一个副本，改变是全局的
+- 对象变量(Object Variable)由类的每一个独立的对象或实例拥有
+```python
+class Robot:
+  population = 0
+  
+  def __init__(self, name):
+    self.name = name
+    print("(Initializing {})".format(self.name))
+    
+    robot.population += 1
+
+  def die(self):
+    """I dead"""
+    print("{} is being destroyed!".format(self.name))
+
+    Robot.population -= 1
+
+    if Robot.population == 0:
+      print("{} was the last one.".format(self.name))
+    else:
+      print("There are still {:d} robots working.".format(Robot.population))
+
+  def say_hi(self):
+    """Greeting from robot
+
+    you can do it. """
+    print("Greetings, my masters call me {}".format(self.name))
+
+  @classmethod
+  def how_many(cls):
+    """打印出当前的人口数量"""
+    print("We have {:d} robots".format(cls.population))
+
+
+droid1 = Robot("R2-D2")
+# (Initializing R2-D2)
+droid1.say_hi()
+# Greetings, my masters call me R2-D2.
+Robot.how_many()
+# We have 1 robots.
+
+droid2 = Robot("C-3P0")
+# (Initializing C-3PO)
+droid2.say_hi()
+# Greetings, my masters call me C-3PO.
+Robot.how_many()
+# We have 2 robots.
+
+print("\nRobot can do some work here. \n")
+
+print("Robots have finished their work. So let's destroy them.")
+droid1.die()
+# R2-D2 is being destroyed!
+droid2.die()
+# C-3PO is being destroyed!
+# C-3PO was the last one.
+
+Robot.how_many()
+# We have 0 robots.
+```
+`@classmethod`装饰器(Decorator)将`how_many`方法标记为类方法
+- 除开以双下划线开头的`__privatervar`(私有变量)，所有的类成员都是公开的，可以被其它任何类或对象所使用
+- 任何类或对象之中使用的对象其命名应以下划线开头，但这只是一个约定，不强制
+
+### 继承
+```python
+class SchoolMember:
+  '''代表任何学校里的成员'''
+  def __init__(self, name, age):
+    self.name = name
+    self.age = age
+    print('(Initialized SchoolMember: {})'.format(self.name))
+  
+  def tell(self):
+    '''告诉我有关我的细节'''
+    print('Name: "{}" Age: "{}"'.format(self.name, self.age), end=" ")
+
+class Teacher(SchoolMember):
+  '''代表一位老师'''
+  def __init__(slef, name, age, salary):
+    SchoolMember.__init__(self, name, age)
+    self.salary = salary
+    print('(Initialized Teacher: {})'.format(self.name))
+
+  def tell(self):
+    SchoolMember.tell(self)
+    print('Salary: "{:d}"'.format(self.salary))
+
+class Student(SchoolMember):
+  '''代表一位学生'''
+  def __init__(self, name, age, marks):
+    SchoolMember.__init__(slef, name, age)
+    self.marks = marks
+    print('(Initialized Student: {})'.format(self.name))
+
+  def tell(self):
+    SchoolMember.tell(self)
+    print('Marks: "{:d}"'.format(self.marks))
+
+t = Teacher('Mrs. Shrividya', 40, 30000)
+s = Student('Swaroop', 25, 75)
+
+members = [t, s]
+for member in members:
+  # 对全体师生工作
+  member.tell()
+
+# Name:"Mrs. Shrividya" Age:"40" Salary: "30000"
+# Name:"Swaroop" Age:"25" Marks: "75"
 ```
