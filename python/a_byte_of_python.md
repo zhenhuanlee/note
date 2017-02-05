@@ -1,4 +1,3 @@
-**老张，多看看**
 # 简明Python教程
 For Python 3
 ## 基础
@@ -663,7 +662,7 @@ while True:
 # 关闭文件
 f.close()
 ```
-> 打开模式：
+> 打开模式：   
 > 1. 阅读模式(`r`)
 > 2. 写入模式(`w`)
 > 3. 追加模式(`a`)
@@ -671,9 +670,9 @@ f.close()
 > 5. ...
 
 ### Pickle
-一个标准模块，通过它可以将任何纯Python对象存储到一个文件中，并在稍后将其取回。这叫做*持久地(Persistently)*存储对象。
+一个标准模块，通过它可以将任何纯Python对象存储到一个文件中，并在稍后将其取回。这叫做*持久地(Persistently)*存储对象。   
 案例(保存为[`io_pickle.py`](https://github.com/pumpkin2011/mypython/blob/master/io_pickle.py))
-> 将一个对象存储到一个文件中：
+> 将一个对象存储到一个文件中：   
 > 1. 二进制模式`open`文件
 > 2. 调用`pickle`模块的`dump`函数，这一过程被称作封装(Pickling)
 >
