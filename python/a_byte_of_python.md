@@ -625,3 +625,57 @@ for member in members:
 # Name:"Mrs. Shrividya" Age:"40" Salary: "30000"
 # Name:"Swaroop" Age:"25" Marks: "75"
 ```
+
+## 输入与输出
+- 希望用户输入内容：`input()`
+- 打印内容：`print`
+
+### 文件
+创建一个术语`file`类的对象，并使用它的`read`、`readline`、`write`方法来打开或使用文件，记得调用`close`方法
+```python
+poem = '''\
+Programming is fun
+When the work is done
+if you wanna make your work alse fun:
+  use Python!
+'''
+
+# 打开文件以编辑('w'riting)
+f = open('poem.txt', 'w')
+# 向文件中编写文本
+f.write(poem)
+# 关闭文件
+f.close()
+
+# 如果没有特别指定
+# 将假定启用默认的阅读('r'ead)模式
+f = open('poem.txt')
+while True:
+  line = f.readline()
+  # 零长度指示 EOF
+  if len(line) == 0:
+    break
+  # 每行（`line`）的末尾
+  # 都已经有了换行符
+  # 因为它是从一个文件中进行读取的
+  print(line, end='')
+
+# 关闭文件
+f.close()
+```
+> 打开模式：
+> 1. 阅读模式(`r`)
+> 2. 写入模式(`w`)
+> 3. 追加模式(`a`)
+> 4. 还可以选择是通过文本模式(`t`)，还是二进制模式(`b`)来读取、写入或追加文本 
+> 5. ...
+
+### Pickle
+一个标准模块，通过它可以将任何纯Python对象存储到一个文件中，并在稍后将其取回。这叫做*持久地(Persistently)*存储对象。
+案例(保存为[`io_pickle.py`](https://github.com/pumpkin2011/mypython/blob/master/io_pickle.py))
+> 将一个对象存储到一个文件中：
+> 1. 二进制模式`open`文件
+> 2. 调用`pickle`模块的`dump`函数，这一过程被称作封装(Pickling)
+>
+> `pickle`模块的`load`函数接受返回的对象，这个被称为*拆封(Unpickling)*
+
