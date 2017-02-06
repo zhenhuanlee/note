@@ -678,3 +678,17 @@ f.close()
 >
 > `pickle`模块的`load`函数接受返回的对象，这个被称为*拆封(Unpickling)*
 
+## 异常
+### 错误
+错误处理器(Error Handler)会抛出(Raise)语法错误
+### 异常
+通过使用`try..except`处理异常   
+案例(保存为[`exceptions_handler.py`](https://github.com/pumpkin2011/mypython/blob/master/exceptions_handler.py))
+> 如果没有为`except`声明异常或错误的名称，它将处理*所有*错误与异常
+> `else`子句将在没有发生异常的时候执行
+### 抛出异常
+可以通过`raise`语句来引发一次异常   
+所引发的异常必须是直接或间接从属于`Exception`类   
+案例(保存为[`exceptions_raise.py`](https://github.com/pumpkin2011/mypython/blob/mas
+ter/exceptions_raise.py))
+
