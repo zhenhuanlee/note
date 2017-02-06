@@ -663,20 +663,19 @@ while True:
 f.close()
 ```
 > 打开模式：   
-> 1. 阅读模式(`r`)
-> 2. 写入模式(`w`)
-> 3. 追加模式(`a`)
-> 4. 还可以选择是通过文本模式(`t`)，还是二进制模式(`b`)来读取、写入或追加文本 
+> 1. 阅读模式(`r`)   
+> 2. 写入模式(`w`)   
+> 3. 追加模式(`a`)  
+> 4. 还可以选择是通过文本模式(`t`)，还是二进制模式(`b`)来读取、写入或追加文本  
 > 5. ...
 
 ### Pickle
 一个标准模块，通过它可以将任何纯Python对象存储到一个文件中，并在稍后将其取回。这叫做*持久地(Persistently)*存储对象。   
 案例(保存为[`io_pickle.py`](https://github.com/pumpkin2011/mypython/blob/master/io_pickle.py))
 > 将一个对象存储到一个文件中：   
-> 1. 二进制模式`open`文件
-> 2. 调用`pickle`模块的`dump`函数，这一过程被称作封装(Pickling)
->
-> `pickle`模块的`load`函数接受返回的对象，这个被称为*拆封(Unpickling)*
+1. 二进制模式`open`文件
+2. 调用`pickle`模块的`dump`函数，这一过程被称作封装(Pickling)   
+`pickle`模块的`load`函数接受返回的对象，这个被称为*拆封(Unpickling)*
 
 ## 异常
 ### 错误
@@ -686,6 +685,7 @@ f.close()
 案例(保存为[`exceptions_handler.py`](https://github.com/pumpkin2011/mypython/blob/master/exceptions_handler.py))
 > 如果没有为`except`声明异常或错误的名称，它将处理*所有*错误与异常
 > `else`子句将在没有发生异常的时候执行
+
 ### 抛出异常
 可以通过`raise`语句来引发一次异常   
 所引发的异常必须是直接或间接从属于`Exception`类   
