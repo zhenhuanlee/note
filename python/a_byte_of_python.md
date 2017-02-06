@@ -673,7 +673,7 @@ f.close()
 一个标准模块，通过它可以将任何纯Python对象存储到一个文件中，并在稍后将其取回。这叫做*持久地(Persistently)*存储对象。   
 案例(保存为[`io_pickle.py`](https://github.com/pumpkin2011/mypython/blob/master/io_pickle.py))
 > 将一个对象存储到一个文件中：   
-1. 二进制模式`open`文件
+1. 二进制模式`open`文件  
 2. 调用`pickle`模块的`dump`函数，这一过程被称作封装(Pickling)   
 `pickle`模块的`load`函数接受返回的对象，这个被称为*拆封(Unpickling)*
 
@@ -689,6 +689,117 @@ f.close()
 ### 抛出异常
 可以通过`raise`语句来引发一次异常   
 所引发的异常必须是直接或间接从属于`Exception`类   
-案例(保存为[`exceptions_raise.py`](https://github.com/pumpkin2011/mypython/blob/mas
-ter/exceptions_raise.py))
+案例(保存为[`exceptions_raise.py`](https://github.com/pumpkin2011/mypython/blob/master/exceptions_raise.py))
 
+### Try...Finally
+始终会被执行的语句块
+案例：[`exceptions_finally.py`](https://github.com/pumpkin2011/mypython/blob/master/exceptions_finally.py)
+
+### `with`语句
+在`try`块中获取资源，然后在`finally`中释放是一种常见模式  
+`with`能使这一过程以一种干净的姿态得以完成
+```python
+with open("poem.txt") as f:
+  for line in f:
+    print(line, end="")
+```
+> 将关闭文件的操作交由`with open`来自动完成  
+`with`会获取由`open`语句所返回的对象  
+它总会在代码块之前调用`thefile.__enter__`函数，并且在代码块执行完毕后调用`thefile.__exit__`
+
+## 标准库
+包含大量有用的模块,可以在[Library
+Reference](https://docs.python.org/3/library/)中查找所有模块
+### `sys`模块
+包括了一些针对特定系统的功能，如`sys.argv`列表包含了命令行参数  
+查看Python软件的版本：
+```python
+>>> import sys
+>>> sys.version_info
+sys.version_info(major=3, minor=6, micro=0, releaselevel='final', serial=0)
+>>> sys.version_info.major == 3
+True
+```
+### 日志模块
+可以将一些Debugging信息或一些重要的信息存储  
+案例：[`stdlib_logging.py`](/pumpkin2011/mypython/blob/master/stdlib_logging.py)
+
+## 更多
+### 传递元组
+可以从一个函数中返回两个不同的值
+```python
+>>> def get_error_details():
+      return (2, 'details')
+
+>>> errnum, errstr = get_error_details()
+>>> errnum
+2
+>>> errstr
+'details'
+```
+### 特殊方法
+诸如`__init__`和`__del__`等一些方法对于类来说有特殊意义  
+特殊方法用来模拟内置类型的某些行为，例子：  
+如果希望为自定义的类使用`x[key]`索引操作，那么需要做的只是实现`__getitem__()`方法
+```python
+class A:
+  def __getitem__(self, index)
+    print('act like a list', index)
+
+>>> a = A()
+>>> a[1]
+act like a list 1
+```
+- `__init__(self, ...)`
+在新创建的对象被返回准备使用时被调用
+- `__del__(self)`
+在对象被删除之前调用（使用机制不可预测，避免使用）
+- `__str__(self)`
+当时用`print`或`str()`时被调用
+- `__lt__(self, other)`
+`<`运算符
+- `__getitem__(self, key)`
+使用`x[key]`索引操作时被调用
+- `__len__(self)`
+当针对序列对象使用内置`len()`函数时被调用
+### 单语句快
+如果语句块只有一句，可以在同一行指定
+```python
+>>> flag = True
+>>> if flag: print('Yes')
+...
+Yes
+```
+### Lambda表格
+`lambda`可以创建一个新的函数对象。`lambda`需要一个参数，后面跟一个表达式作为函数体，这个表达式执行的值将作为这个新函数的返回值  
+```python
+ipoints = [{'x': 2, 'y': 3},
+           {'x': 4, 'y': 1}]
+points.sort(key=lambda i: i['y'])
+print(points)
+```
+> `list`的`sort`方法可以获得一个`key`参数，用以决定列表的排序方式  
+### 列表推导(List Comprehension)
+从一个现有的列表中得到一个新列表  
+案例：
+```python
+listone = [2, 3, 4]
+listtwo = [2*i for i in listone if i > 2]
+print(listtwo)
+```
+### 在函数中接受元组和字典
+使用`*`和`**`作为元组和字典的前缀
+### `assert`语句
+`assert`用于断言某事是真的  
+如非常去定某个列表中至少包含一个元素，并想确认这一点，如果不是真的，就抛出一个错误`AssertionError`
+```python
+>>> mylist = ['item']
+>>> assert len(mylist) >= 1
+>>> mylist.pop()
+'item'
+>>> assert len(mylist) >= 1
+AssertionError
+```
+### 装饰器(Decorators)
+应用包装函数的快捷方式，这有助于将某一功能与一些代码一遍又一遍的"包装"  
+案例：创建一个`retry`装饰器[`decorator_retry.py`]()
