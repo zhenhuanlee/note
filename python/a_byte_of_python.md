@@ -722,7 +722,7 @@ True
 ```
 ### 日志模块
 可以将一些Debugging信息或一些重要的信息存储  
-案例：[`stdlib_logging.py`](pumpkin2011/mypython/blob/master/stdlib_logging.py)
+案例：[`stdlib_logging.py`](https://github.com/pumpkin2011/mypython/blob/master/stdlib_logging.py)
 
 ## 更多
 ### 传递元组
@@ -802,4 +802,4 @@ AssertionError
 ```
 ### 装饰器(Decorators)
 应用包装函数的快捷方式，这有助于将某一功能与一些代码一遍又一遍的"包装"  
-案例：创建一个`retry`装饰器[`decorator_retry.py`]()
+案例：创建一个`retry`装饰器[`decorator_retry.py`](https://github.com/pumpkin2011/mypython/blob/master/decorator_retry.py)
