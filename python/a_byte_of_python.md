@@ -779,6 +779,7 @@ points.sort(key=lambda i: i['y'])
 print(points)
 ```
 > `list`的`sort`方法可以获得一个`key`参数，用以决定列表的排序方式  
+
 ### 列表推导(List Comprehension)
 从一个现有的列表中得到一个新列表  
 案例：
