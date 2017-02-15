@@ -10,6 +10,7 @@ HTTP使用URI(Unifrom Resource Identifiers)来传输数据和建立连接
 
 ### 客户端请求信息
 ![header](../assets/request_header.png)
+Postman:
 ```
 POST /api/v4/custom_remoters/update_custom_remoters?user_id=100001 HTTP/1.1
 Host: 192.168.1.112:3000
@@ -28,3 +29,49 @@ Content-Disposition: form-data; name="customer_keys"
 {key_id:1,group:1,order:1}
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 ```
+
+### HTTP 请求方法
+   | 方法    | 描述
+:- | :-----: | -----------------------------------------------------:
+1  | GET     | 请求指定的页面信息，并返回实体主体
+2  | HEAD    | 类似于GET，只不过返回的响应中没有具体的内容，用于获取报头 
+3  | POST    | 向指定的资源提交数据进行处理请求(表单，文件) 
+4  | PUT     | 从客户端向服务器传送的数据取代指定的文档的内容 
+5  | DELETE  | 请求服务器删除指定的页面 
+6  | CONNECT | HTTP/1.1协议中预留给能够将连接改为管道方式的代理服务器
+7  | OPTIONS | 允许客户端查看服务器的性能
+8  | TRACE   | 回显服务器收到的请求，主要用于测试或诊断 
+
+### HTTP 响应头信息
+HTTP请求头提供了关于请求，响应或者其他的发送实体的信息  
+- Allow: 服务器支持哪些请求方法(GET POST ...)
+- Content-Encoding:
+  文档的编码(Encode)方法。只有在解码后才可以得到Content-Type头指定的内容类型
+- Content-Length: 表示内容长度。只有当浏览器使用持久HTTP连接时才需要这个数据
+- Content-Type: 表示后面的文档属于什么MIME类型。
+- Date: 当前的GMT时间
+- Expires: 应该在什么时候认为文档已过期，从而不再缓存它
+- Last-Modified:
+  文档最后的修改时间，只有当改动时间迟于指定时间的文档才会返回，否则返回304(Not
+Modified)
+- Location: 表示客户应当到哪里去提取文档
+- Refresh: 表示浏览器应当在多少时间后刷新文档，秒单位。
+可以通过setHeader("Refresh", "5;URL=http://host/path")让浏览器读取指定的页面
+```
+<META HTTP-EQUIV="Refresh" CONTENT="5;URL=http://host/path">
+```
+- Server: 服务器的名字
+- Set-Cookie: 设置和页面关联的Cookie
+- WWW-Authenticate: 授权信息
+
+### HTTP 状态码
+- 1**：信息，服务器收到请求，需要请求者继续执行操作
+- 2**：成功，操作被成功接受并处理
+- 3**：重定向，需要进一步的操作以完成请求
+- 4**：客户端错误，请求包含语法错误或无法完成请求
+- 5**：服务器错误，服务器在处理请求的过程中发生错误
+
+### HTTP Content-Type
+内容类型，一般指网页中存在的Content-Type，用于定义网络文件的类型和网页的编码，决定浏览器将以什么形式、什么编码来读取这个文件
+#### HTTP Content-Type 对照表
+
