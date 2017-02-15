@@ -32,7 +32,7 @@ Content-Disposition: form-data; name="customer_keys"
 
 ### HTTP 请求方法
    | 方法    | 描述
-:- | :-----: | -----------------------------------------------------:
+--- | ------ | -----------------------------------------
 1  | GET     | 请求指定的页面信息，并返回实体主体
 2  | HEAD    | 类似于GET，只不过返回的响应中没有具体的内容，用于获取报头 
 3  | POST    | 向指定的资源提交数据进行处理请求(表单，文件) 
@@ -73,5 +73,70 @@ Modified)
 
 ### HTTP Content-Type
 内容类型，一般指网页中存在的Content-Type，用于定义网络文件的类型和网页的编码，决定浏览器将以什么形式、什么编码来读取这个文件
-#### HTTP Content-Type 对照表
 
+#### 表单的发包方式
+1. application/x-www-from-urlencoded  
+常用的表单发包方式，普通的表单提交，或者js发包，默认都是这种
+```html
+<form encrypt="application/x-www-form-urlencoded" action="" method="POST">
+</form>
+```
+服务器收到的raw header:
+```
+Accept:text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+Accept-Encoding:gzip, deflate
+Accept-Language:zh-CN,zh;q=0.8,en;q=0.6,zh-TW;q=0.4,gl;q=0.2,de;q=0.2
+Cache-Control:no-cache
+Connection:keep-alive
+Content-Length:17
+Content-Type:application/x-www-form-urlencoded
+```
+2. multiplepart/form-data  
+用在发送文件的POST包  
+```python
+data = { "key": "123" }
+files = {'file': open('index.py', 'rb')}
+res = request.post(url="http://localhost/upload", method="POST", data=data,
+files=files)
+print res
+```
+会发送如下数据
+```
+POST http://www.homeway.me HTTP/1.1
+Content-Type:multipart/form-data;
+boundary=------WebKitFormBoundaryOGkWPJsSaJCPWjZP
+
+------WebKitFormBoundaryOGkWPJsSaJCPWjZP
+Content-Disposition: form-data; name="key2"
+456
+------WebKitFormBoundaryOGkWPJsSaJCPWjZP
+Content-Disposition: form-data; name="key1"
+123
+------WebKitFormBoundaryOGkWPJsSaJCPWjZP
+Content-Disposition: form-data; name="file"; filename="index.py"
+```
+
+3. text/html  
+它是一种使用HTTP作为传输协议，XML作为编码方式的远程调用规范  
+微信用的是这种数据发送请求的
+```
+POST http://www/homeway.me HTTP/1.1
+Content-Type: text/xml
+
+<?xml version="1.0"?>
+<resouce>
+  <id>123</id>
+  <params>
+    <name>
+      <value>homwway</value>
+    </name>
+    <age>
+      <value>22</value>
+    </age>
+  </params>
+</resouce>
+```
+
+4. application/json  
+使用json形式将数据发送给服务器  
+可以方便的提交复杂的结构化数据，特别适合RESTful的接口
