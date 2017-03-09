@@ -49,9 +49,9 @@ p sth   #=> 'Ruby'
 中的任何一个,你就进入了一个新的作用域
 
 ### 打破作用域门
-不用上面的几个关键词就可以了
-class    =>  Class.new {}
-module   =>  Module.new {}
+不用上面的几个关键词就可以了  
+class    =>  Class.new {}  
+module   =>  Module.new {}  
 def xx   =>  define_method :xx {}
 
 ### block 是作用域门么
