@@ -88,7 +88,7 @@ el.style.cssText += "; left: " + left + "px; top: " + top + "px;"
 一秒之间能够完成多少次重新渲染，这个指标就被成为"刷新率"(FPS Frame per second)。  
 如果想达到60FPS，就意味着JS的每个任务的耗时必须少于16ms。一个解决办法是使用Web Worker，主线程只用于UI渲染，然后跟UI渲染不相干的人物都放在Worker线程。
 
-## Performance （大清亡了）
+## ~~Timeline~~ Performance （大清亡了）
 - 蓝色：网络通信和HTML解析  
 - 黄色：JS执行  
 - 紫色：样式计算和布局，即重排  

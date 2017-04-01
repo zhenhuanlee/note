@@ -57,7 +57,7 @@ HTTP请求头提供了关于请求，响应或者其他的发送实体的信息
 Modified)
 - Location: 表示客户应当到哪里去提取文档
 - Refresh: 表示浏览器应当在多少时间后刷新文档，秒单位。
-可以通过setHeader("Refresh", "5;URL=http://host/path")让浏览器读取指定的页面
+可以通过`etHeader("Refresh", "5;URL=http://host/path")让浏览器读取指定的页面`
 ```
 <META HTTP-EQUIV="Refresh" CONTENT="5;URL=http://host/path">
 ```
