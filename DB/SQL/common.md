@@ -1,132 +1,46 @@
-# 常用的SQL语句
-## ROW NUMBEr() OVER ()
-将表排序，并赋予一个序号  
+# 一些概念
+
+## sql执行顺序
+第一个被处理的是`FROM`子句  
+`SELECT`最后被处理
+
+每个步骤都会产生一个虚拟表，这个虚拟表会被作用到下一个步骤的输入。这些虚拟表对调用者不可用，最后一步生成的表才会返回给调用者.
+如果没有在查询中指定某一个子句，将跳过相应的步骤。  
 ```sql
-SELECT row_number() OVER (PARTITION BY device_category_id ORDER BY id DESC), id, device_category_id
-FROM remoters
--- 按device_category_id分组，并按id排序
+(8)SELECT (9)DISTINCE (11)<TOP Num> <SELECT list>
+(1)FROM [left_table]
+(3)<join_type> JOIN <right_table>
+(2)ON <join_condition>
+(4)WHERE <where_condition>
+(5)GROUP BY <group_by_list>
+(6)WITH <CUBE | RollUP>
+(7)HAVING <having_condition>
+(10)ORDER BY <order_by_list>
 ```
-row_number | id | device_category_id
----------- | -- | -----------------
-2298       | 15 |   2
-2299       | 13 |   2
-2300       | 4  |   2
-1          |8797|   4
-2          |8796|   4
-> 部分结果
+1. FROM: 对FROM子句中的前两个表执行笛卡儿积(Cartesian product)(交叉连接)，生成虚拟表VT1  
+2. ON: 对VT1应用ON筛选，只有那些使<join_condition>为真的行才被插入VT2  
+3. OUTER(JOIN): 如果指定了OUTER JOIN(相对于CROSS JOIN或INNER JOIN)，保留表(preserved table：左外部联接把表标记未保留表，右外部联接把右表标记为保留表，完全外部联接把两个表都标记未保留表)中找到匹配的行将作为外部行添加到VT2，生成VT3.如果FROM子句包含两个以上的表，则对上一个联接生成的结果表和下一个表重复执行步骤1到3，直到处理完所有的表为止。  
+4. WHERE: 对VT3应用WHERE筛选器。只有使<where_condition>为true的行才被插入VT4  
+5. GROUP BY: 按GROUP BY子句中的列对VT4中的行分组，生成VT5  
+6. CUBE|ROLLUP: 把超组(Suppergroups)插入VT5，生成VT6  
+7. HAVING: 对VT6应用HAVING筛选器，只有使<having_condition>为true的组才被插入VT7  
+8. SELECT: 处理SELECT列表，产生VT8  
+9. DISTINCT: 将重复的行从VT8中移除，产生VT9  
+10. ORDER BY: 将VT9中的行按ORDER BY子句中的列列表排序，生成游标(VC10)  
+11. TOP: 从VC10的开始处选择指定数量或比例的行，生成表VT11，并返回给调用者  
+> 步骤10，按ORDER BY子句中的列列表排序上步返回的行，返回游标VC10.这一步是第一步也是唯一一步可以使用SELECT列表中的列别名的步骤。这一步不同于其他步骤的是，它不返回有效的表，而是返回一个游标。SQL的基于集合理论的，集合不会预先对它的行排序，它只是成员的逻辑集合，成员的顺序无关紧要。对表进行排序的查询可以返回一个对象，包含按特定物理顺序组织的行。ANSI吧这种对象称为游标。理解这一步是正确理解SQL的基础  
+> 因为这一步不反悔表(而是返回游标)，使用ORDER BY子句的查询不能用作表表达式，表表达式包括：视图，内联表值函数，子查询，派生表和公用表达式。它的结果必须返回给期望得到物理记录的客户端应用程序。  
 
-## CASE WHEN THEN ELSE END
+下面的派生表查询无效，并产生一个错误：  
 ```sql
--- 简单case语句
-CASE gender
-WHEN '1' THEN 'male'
-WHEN '2' THEN 'female'
-ELSE 'other' END
--- case搜索函数，可以写判断了
-CASE WHEN SEX='1' THEN 'male'
-     WHEN SEX='2' THEN 'female'
-     ELSE 'other' END
+SELECT *
+FROM (SELECT orderid, customerid FROM orders ORDER BY orderid)
+AS d
 ```
-> 如果第一个正确，第二个就不会执行  
-
-1. 习题1
-
-country | population
-------- | ----------
-中国     | 600
-美国     | 100
-加拿大   | 100
-英国     | 200
-法国     | 300
-日本     | 250
-德国     | 200
-墨西哥   | 50
-印度     | 250
-
-得到
-
-continent | population
---------- | ----------
-亚洲       | 1100
-北美洲     | 250
-其他       | 700
-
+下面的视图也会产生错误
+> 视图：存储在数据库中并具有名字的SQL语句，一个虚拟的表  
 ```sql
-SELECT sum(population),
-(CASE country
-WHEN '中国'   THEN '亚洲'
-WHEN '美国'   THEN '北美'
-WHEN '加拿大' THEN '其他'
-WHEN '英国'   THEN '北美'
-ELSE '其他' END)
-FROM countries
-GROUP BY (CASE country
-WHEN '中国'   THEN '亚洲'
-WHEN '美国'   THEN '北美'
-WHEN '加拿大' THEN '其他'
-WHEN '英国'   THEN '北美'
-ELSE '其他' END)
-```
-
-2. 习题2
-国家 | 性别 | 人口
---- | ---- | ---
-中国 |  1  | 340
-中国 |  2  | 260
-美国 |  1  | 45
-美国 |  2  | 55
-
-国家 | 男   |  女
---- | ---- | ---
-中国 |  340 | 260
-美国 |  45  | 55
-
-```sql
--- 方案1
-SELECT country,
-SUM(CASE sex WHEN 1 THEN population ELSE 0 END) man,
-SUM(CASE sex WHEN 2 THEN population ELSE 0 END) woman
-FROM countries
-GROUP BY country
-
--- 方案2
-SELECT res.country, SUM(男), SUM(女) FROM
-(SELECT country, population 男, 0 女 FROM countries WHERE sex=1
- UNION
- SELECT country, 0 男, population 女 FROM countries WHERE sex=2) res
-GROUP BY res.country
-
--- 方案3
-SELECT country,
-SUM(population) FILTER (WHERE sex=1) AS man,
-SUM(population) FILTER (WHERE sex=2) AS female
-FROM countries
-GROUP BY country
-```
-
-3. 在`CHECK`中使用`CASE`函数
-```sql
-CREATE TABLE users (
-    name varchar(10),
-    sex varchar(2),
-    age INTEGER
-    CHECK(age > 10 AND sex='1')
-)
-
--- sex为2的需要工资大于1000
-CONSTRAINT check_salary CHECK(
-  CASE WHEN sex='2' THEN CASE
-  WHEN salary > 1000 THEN 1 ELSE 0 END
-  ELSE 1 END = 1
-)
-```
-
-4. 有条件有选择的`UPDATE`
-```sql
--- 大于5000，-10%，否则，+15%
-UPDATE personnel SET salary = (
-  CASE WHEN salary > 5000 THEN salary * 0.9
-       WHEN salary > 2000 AND salary < 4500 THEN salary * 1.1
-       ELSE salary END
-)
+CREATE VIEW my_view
+AS
+SELECT * FROM orders ORDER BY orderid
 ```
