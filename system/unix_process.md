@@ -4,7 +4,7 @@
 
 ### 系统调用
 Unix系统的组成，具体来说就是用户空间(userland)和内核  
-系统调用：内核和用户控件搭建的桥梁  
+系统调用：内核和用户空间搭建的桥梁  
 所有的程序都运行在用户空间  
 总的来说，系统调用允许你的用户控件通过内核间接地与计算机硬件进行交互。
 
@@ -93,21 +93,19 @@ export | grep ABC # export也没导出，导出变量也没有
 export aaa        # 导出变量，变成环境变量
 env | grep aaa    # ABC=abc     环境变量内存在
 ```
-> Linux分shell变量(set)，用户变量(env)，shell变量包含用户变量，export是一种命令工具
-是显示那些通过export命令把shell变量中包含的shell变量导入给用户变量的那些变量  
+> Linux分自定义变量(set)，环境变量(env)，自定义变量包含用户变量，export是一种命令工具
+是显示那些通过export命令把自定义变量中包含的变量导入给环境变量  
 
-最根本的是修改 ~/.bash_profile  ~/.bashrc  ~/.bash_logout  
-- ~/.bash_profile    用户登录时被读取，其中包含的命令被执行  
-- ~/.bashrc          启动新的shell时被读取，执行  
-- ~/.bash_logout       shell登录退出时读取  
+最根本的是修改 .bash_profile    .bashrc    .bash_logout  
+- ~/.bash_profile ---- 用户登录时被读取，其中包含的命令被执行  
+- ~/.bashrc ---------- 启动新的shell时被读取，执行  
+- ~/.bash_logout ----- shell登录退出时读取  
 
 shell(此处指bash)的初始化过程是这样的：  
-1. bash检查文件/etc/profile是否存在  
-2. 如果存在，bash就读取该文件，否则跳过  
-3. bash检查主目录下的文件.bash_profile是否存在  
-4. 如果存在，bash就 读取该文件，否则，跳过  
-5. bash检查主目录下的.bash_login是否存在，有就读取，否则跳过  
-6. bash检查主目录下的.profile是否存在，有就读取，否则跳过  
+1. bash检查文件/etc/profile是否存在，存在就读取，否则跳过  
+2. bash检查主目录下的文件.bash_profile是否存在，存在就读取，否则跳过  
+3. bash检查主目录下的.bash_login是否存在，有就读取，否则跳过  
+4. bash检查主目录下的.profile是否存在，有就读取，否则跳过  
 
 单引号，双引号，反单引号的作用：  
 - "": 可以保留变量的内容    
@@ -123,7 +121,7 @@ $ RAILS_ENV=production rails server
 $ EDITOR=mate bundle open actionpack
 $ QUEUE=default rake resque:work
 ```
-环境变量京城作为一种将输入传递到命令行程序中的通用方法，所有的终端(Unix或Windows)均已支持环境变量  
+环境变量经常作为一种将输入传递到命令行程序中的通用方法，所有的终端(Unix或Windows)均已支持环境变量  
 比起解析命令行选项，使用环境变量的开销通常更小
 
 ## 进程皆有参数
@@ -146,10 +144,10 @@ Unix进程几乎没有什么固有的方法来获悉彼此的状态
 解决之道：  
 1. 日志文件，向文件系统写入信息来了解彼此的状态信息，这术语文件系统层面，而非进程本身所固有   
 2. 进程可以接住网络来打开套接字同其他进程进行通信，依靠网络，也非进程本身所固有
-3. 有两种晕坐在进程本身层面上的机制可以用来互通信息，进程名称，退出码  
+3. 有两种运作在进程本身层面上的机制可以用来互通信息，进程名称、退出码  
 
 ### 进程名称
-系统中每一个进程都有名称，如一个irb会话，对应的进程就获得了"irb"的名称。进程名的妙处在与它可以在运行期间被修改并作为一种通信手段  
+系统中每一个进程都有名称，如一个irb会话，对应的进程就获得了"irb"的名称。进程名的妙处在于它可以在运行期间被修改并作为一种通信手段  
 ruby中可以在变量$PROGRAM_NAME中获得或修改当前进程的名称
 ```ruby
 puts $PROGRAM_NAME
@@ -212,7 +210,7 @@ raise 'hell'
 
 ## 进程皆可衍生
 ### Luke，使用fork(2)
-衍生(firking)(Unix编程中最强大的概念之一)。fork(2)系统调用允许运行中的进程以编程的形式创建新的进程  
+衍生(forking)(Unix编程中最强大的概念之一)。fork(2)系统调用允许运行中的进程以编程的形式创建新的进程  
 这个新的进程和原始的进程一模一样  
 进行衍生时，调用fork(2)的进程被称为"父进程"，新创建的进程被称为"子进程"  
 _子进程从父进程处继承了其所占用内存中的所有内容，以及所有属于父进程的已打开的文件描述符，这样两个进程就可以共享打开的文件，套接字等等_  
@@ -303,7 +301,7 @@ fork do
   # 上面的代码修改了数组，因此在进行修改之前需要为子进程创建一个该数组的副本，父进程中的数组并不会被影响
 end
 ```
-这样就意味着更高，更快，更省  
+这样就意味着~更高~，更快，更省  
 但是MRI或Rubinius并不支持  
 想要CoW正常运作，程序需要以一种CoW友好的方式来编写。也就是说，它们得用一种使CoW成为可能的方式来管理内存。MRI和Rubinius并不是采用这种方式来写的  
 > 为何不可？  
@@ -313,7 +311,7 @@ end
 这就是创建Ruby企业版(Ruby Enterprise Edition)的主要原因之一，REE是CoW友好的  
 
 ### MRI/RBX用户
--对于其他Ruby虚拟机来说，fork享受不到CoW的好处，子进程需要获取调用进程所战友的内存内容的完整副本-
+~对于其他Ruby虚拟机来说，fork享受不到CoW的好处，子进程需要获取调用进程所战友的内存内容的完整副本~
 Ruby2.0以提供CoW友好的垃圾收集器  
 
 ## 进程可待
@@ -359,7 +357,7 @@ Parent process died...
 `Process.wait`是一个阻塞调用，该调用使得父进程一直等到它的某个子进程退出后才继续执行  
 
 ### Process.wati 一家子
-`Process.wait`会一直保持堵塞，知道任意一个子进程退出位置。如果父进程拥有不止一个进程，并且使用了`Process.wait`，那么就需要知道究竟是哪个子进程退出了。这时可以用返回值来解决这个问题  
+`Process.wait`会一直保持堵塞，直到任意一个子进程退出为止。如果父进程拥有不止一个进程，并且使用了`Process.wait`，那么就需要知道究竟是哪个子进程退出了。这时可以用返回值来解决这个问题  
 `Process.wait`会返回退出的那个子进程的pid  
 ```ruby
 3.times do
@@ -537,11 +535,10 @@ end
 # 如果信号处理程序在调用#puts之后被中断，则会引发一个ThreadError
 # 如果你的信号处理程序需要执行IO操作，那么这不失为一个好方法
 $stdout.sync = true
-# 不知道是干嘛的
 
 # 通过捕获:CHLD信号，内核会体型父进程它的子进程合适退出
 trap(:CHLD) do
-  # 由于Process.wait将它获得的数据都加入了队列，英雌可以在此进行查询
+  # 由于Process.wait将它获得的数据都加入了队列，因此可以在此进行查询
   # 因为我们知道其中一个子进程已经退出了
 
   # 执行一个非阻塞的Process.wait以确保统计每一个结束的子进程
@@ -559,5 +556,90 @@ end
 loop do
   (Math.sqrt(rand(44)) ** 8).floor
   sleep 1
+end
+```
+
+### 信号入门
+信号是一种异步通信。当进程从内核那里接收到信号，它可以执行下列的某一操作：  
+1. 忽略该信号  
+2. 执行特定的操作  
+3. 执行默认的操作  
+
+### 信号来自何方
+信号由一个进程发送到另一个进程，借用内核作为中介   
+1. 第一个ruby会话中：
+```ruby
+puts Process.pid
+sleep
+```
+2. 第二个ruby会话中：
+```ruby
+Process.kill(:INT, pid)
+```
+> 第二个进程会向第一个进程发送一个INT信号，使其退出  
+> INT是INTERRUPT(中断)的缩写
+
+### 信号一览
+Term    进程立即结束
+Core    进程会立即结束，并进行核心转储(栈跟踪)
+lgn     表示进程会忽略该信号
+Stop    表示进程会停止运行(暂停)
+Cont    表示进程会回府运行(继续)
+...
+
+### 重定义信号
+...
+
+### 忽略信号
+...
+
+### 信号处理是全局性
+捕获一个信号有点像使用一个全局变量
+
+### 恰当的冲定义信号处理程序
+最佳角度来说，代码不应该定义任何信号处理程序，除非它是服务器  
+
+### 合适接收不到信号？
+进程可以在任何时候接收到信号。
+
+## 进程皆可互通
+这属于进程间通信(IPC)研究领域的一部分。有很多方法可以实现IPC，最常用的两种是：管道和套接字对
+
+### 第一个管道
+管道是一个单向数据流。只能从一个进程传给另一个进程  
+如何创建一个管道：
+```ruby
+reader, writer = IO.pipe
+=> [#<IO:fd 9>, #<IO:fd 10>]
+```
+IO.pipe 返回一个包含两个IO对象的数组  (Ruby的IO类是File、TCPSocket、UDPSocket的超类)
+基本上可以将IO对象当做File来对待(#read、#write、#close、etc..)   
+```ruby
+reader, writer = IO.pipe
+writer.write("Into the pipe I go...")
+writer.close   # 立刻就关闭了
+puts reader.read
+```
+> reader调用read时，它会不停的试图从管道中读取数据，知道EOF标志
+
+### 管道是单向的
+...
+
+### 共享管道
+管道也是资源，它有自己的文件描述符以及其他的一切，因此也可以被共享  
+```ruby
+reader, writer = IO.pipe
+
+fork do
+  reader.close
+
+  10.times do
+    writer.puts "Another one bites the dust"
+  end
+end
+
+writer.close
+while message = reader.gets
+  $stdout.puts message
 end
 ```
