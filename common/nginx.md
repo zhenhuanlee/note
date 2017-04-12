@@ -2,7 +2,7 @@
 ## nginx模块开发篇
 ### nginx性能高的原因
 nginx运行后以daemon的方式在后台运行，一个master进程和多个worker进程(多进程的形式)，master进程主要用来管理worker进程。worker进程用来处理基本的网络事件，一般worker的个数与cpu的核数一致。  
-![nginx进程模型](../assets/process_structure.jpg)
+![nginx进程模型](../assets/process_structure.jpg)  
 我们所做的操作都是向master发出信号，然后master进程再向worker进程发出信号  
 
 #### worker进程如何处理请求
@@ -12,21 +12,21 @@ nginx运行后以daemon的方式在后台运行，一个master进程和多个wor
 
 #### nginx的异步非堵塞请求方式
 一个请求的完整过程是：请求 -- 建立连接 -- 接受数据 -- 发送数据，具体到系统层面就是读写事件  
-堵塞调用的话就是：事件没准备好，进入内核等待，CPU让出资源(加进程不合适，这和apache的线程模型有什么区别)  
+堵塞调用的话就是：事件没准备好，进入内核等待，CPU让出资源(加进程数量不合适，这和apache的线程模型有什么区别)  
 非阻塞：事件没准备好，马上返回EAGAIN(Linux中常见的错误，提示再试一次？)，表明事件没准备好，等下再来检查事件，直到事件准备好为止，显然这样时不时回来检查增加了开销，nginx提供了异步非堵塞的事件处理机制：_具体到系统调用就像select/pll/epoll/kqueue这样，他们提供了一种机制，让你可以同时监控多个事件，调用它们是堵塞的，但是可以设置超时时间，在超时时间内，如果事件准备好了就返回_
 
- 对于以个基本的web服务器来说，事件通常有三种类型，网络事件、信号、定时器  
+ 对于一个基本的web服务器来说，事件通常有三种类型，网络事件、信号、定时器  
 
  #### connection
  nginx中connection就是tcp连接的封装，其中包含连接的socket，读事件，写事件。nginx中http请求的处理就是建立在connection之上，所以nginx也可以用作邮件服务器
 
  #### nginx是如何处理一个连接的
- 1. nginx在启动时会解析配置文件，得到需要坚挺的端口与IP地址   
- 2. 在nginx的master进程里，先初始化好这个监控的socket(创建socket，设置addrreuse等选项，绑定到制定的IP地址段门口，在listen)  
+ 1. nginx在启动时会解析配置文件，得到需要监听的端口与IP地址   
+ 2. 在nginx的master进程里，先初始化好这个监控的socket(创建socket，设置addrreuse等选项，绑定到指定的IP地址端口，再listen)  
  3. fork出多个子进程出来，子进程会竞争accept新的连接  
  4. 客户端与nginx三次握手，建立好一个连接  
- 5. 一个子进程会accept成功，得到这个建立好的连接的socket，然后床关键nginx对连接的封装，及ngx_connection_t结构体  
- 6. 设置读写事件处理函数，并添加读写事件来与客户端进行数据的好交换  
+ 5. 一个子进程会accept成功，得到这个建立好的连接的socket，然后创建nginx对连接的封装，即ngx_connection_t结构体  
+ 6. 设置读写事件处理函数，并添加读写事件来与客户端进行数据的交换  
  7. nginx或客户端主动关掉连接
 
 
@@ -49,7 +49,7 @@ pipline：流水线作业，可以看作是keep-alive的升级，pipline也是�
 延迟关闭：当nginx要关闭连接时，并不是立即关闭，而是先关闭tcp连接的写，再关闭连接的读  
 
 
-###　基本数据结构
+### 基本数据结构
 #### ngx_str_t(带长度的字符串结构)
 长度而不是'\0'来表明一个字符串，这样在引用时，可以直接指向同一个内存地址，而不用copy一份，但是，修改的时候一定要谨慎   
 常用API：
@@ -111,14 +111,14 @@ void *ngx_array_push(ngx_array_t *a);
 ...
 ```
 
-####　ngx_hash_t
+#### ngx_hash_t
 ```nginx
 ngx_int_t ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
 ngx_uint_t nelts);
 # 初始化
 ...
 ```
-####　ngx_hash_combined_t
+#### ngx_hash_combined_t
 组合类型hash表，提供一个方便的容易包含三个类型的hash表，当有包含通配符和不包含通配符的一组key构建你hash表后，以一种方便的方式来查询，不需要考虑一个key到底应该去哪个类型的hash表里查
 ```nginx
 void *ngx_hash_find_combined(ngx_hash_combined_t *hash, ngx_uint_t key,
@@ -196,4 +196,29 @@ http {
 
 #### nginx的模块化体系结构
 nginx的核心是由核心部分和一系列的功能模块所组成。  
-nginx提供了web服务器的基础功能，同时提供了web服务反向代理，email服务反向代理功能。ngxin core(nginx核心功能)
+nginx提供了web服务器的基础功能，同时提供了web服务反向代理，email服务反向代理功能。ngxin core(nginx核心功能)实现了底层的通讯协议，为其他模块和nginx进程构建了基本的运行时环境，并且构建了其他各模块的协作基础。除此之外，大部分与协议相关的，或者应用相关的功能都在这些模块中实现  
+
+#### 模块概述
+nginx将各个功能模块组织成一条链，当有请求到达的时候，请求一次经过这条链上的部分或者全部模块，进行处理。每个模块实现特定的功能。  
+http和mail模块比较特殊，它们在nginx core上实现了另一层抽象，处理与HTTP和email相关的协议(SMPT/POP3/IMAP)相关的事件，并且确保这些时间能被以正确的顺序调用其他的一些功能模块    
+
+#### 模块的分类
+- event  搭建了独立于操作系统的事件处理机制的框架，及提供了各种具体时间的处理，包括ngx_events_module  
+- module ngx_event_core_module和ngx_epoll_module  
+- phase  次类型的模块被成为handler模块，主要负责处理客户端请求并产生待响应内容  
+- handler ngx_http_static_module模块，负责客户端的静态页面请求处理并将对应的磁盘文件准备为响应内容输出  
+- output 也称filter模块，主要负责对输出的内容进行处理  
+- filter html页面增加预定义的footbar一类的工作，或者对输出的图片的URL进行替换之类的  
+- upstream 实现反射代理的功能，将真正的请求转发到后端的服务器上，并从后端读取响应，发回客户端，upstream模块是一种特殊的handler，只不过响应内容不是真正由自己产生的，而是从后端服务器上读取的  
+- load-bakancer  负载均衡模块，实现特定的算法，在众多的后端服务中，选择一个服务器出来作为某个请求的转发服务器
+
+#### nginx的请求处理
+nginx使用一个多进程模型来对外提供服务，其中一个master进程，多个worker进程。master进程负责管理nginx本身和其他worker进程   
+所有实际上的业务处理逻辑都在worker进程。worker进程中有一个函数，执行无限循环，不断处理收到的来自客户端的请求，并进行处理，直到整个nginx服务器被停止  
+worker进程中，ngx_worker_process_cycle()函数就是这个无限循环函数，在这个函数中，一个请求的简单处理流程如下：  
+1. 操作系统提供的机智(如epoll, kqueue等)产生相关的事件  
+2. 接收和处理这些事件，如是接收到数据，则产生更高层的request对象  
+3. 处理request的header和body  
+4. 产生响应，并发回客户端  
+5. 完成request请求   
+6. 重新初始化定时器及其他事件  
