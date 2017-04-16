@@ -155,7 +155,7 @@ location / {
 # 复杂配置项
 ```
 
-####　指令上下文
+#### 指令上下文
 - main: nginx在运行时与具体业务功能(如http服务或者email服务代理)无关的一些参数。比如工作进程数，运行的身份等  
 - http: 提供http服务相关的一些配置参数。比如是否使用keepalive，是否使用gzip进行压缩等  
 - server: http服务上支持若干虚拟主机。每个虚拟主机对应的server配置项，配置项里面包含该虚拟主机相关的配置  
@@ -222,3 +222,11 @@ worker进程中，ngx_worker_process_cycle()函数就是这个无限循环函数
 4. 产生响应，并发回客户端  
 5. 完成request请求   
 6. 重新初始化定时器及其他事件  
+
+#### 请求的处理流程
+一个HTTP Requst的处理流程如下：  
+1. 初始化HTTP Requst(读取来自客户端的数据，生成HTTP Requst对象，该对象包含有改请求所有的信息)  
+2. 处理请求头  
+3. 处理请求体  
+4. 如果有的话，调用此请求(URL或者Location)关联的handler  
+5. 依次调用各phase handler(包含若干个处理阶段的一些handler)进行处理  
