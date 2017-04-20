@@ -3,7 +3,7 @@
 ### Ruby的套接字库
 ```ruby
 require 'socket'
-# socket库是Ruby标准库的组成部分。同opensll、zlib和curses这些类似，socket库与其所以来的
+# socket库是Ruby标准库的组成部分。同opensll、zlib和curses这些类似，socket库与其所依赖的
 # C语言库之间是thin binding关系
 ```
 
@@ -72,7 +72,6 @@ socket.bind(addr)
 这是一个低层次实现，演示了如何将TCP套接字绑定到本地端口上，客户端套接字可以使用该端口号链接服务器套接字  
 
 ### 应该绑定到哪个端口
-规则：  
 1. 不要使用0-1024之间的端口，这些端口是保留给系统使用的  
 2. 不要使用49000-65535之间的端口，这些都是临时端口  
 3. 1025-48999之间的端口的使用是一视同仁的，决定使用时可以查一下IANA注册端口列表
@@ -135,10 +134,10 @@ echo ohai | nc localhost 4481
 程序顺利退出
 
 #### 以阻塞方式接受连接
-`accpet`调用是阻塞式的，它将还未处理的连接从队列中弹出(pop)而已。如果队列为空，那么它就一直等，知道有连接被加入到队列为之
+`accpet`调用是阻塞式的，它将还未处理的连接从队列中弹出(pop)而已。如果队列为空，那么它就一直等，知道有连接被加入到队列为止
 
 #### accept调用返回一个数组
-第一个元素是建立好的连接，第二个元素是一个A`Addrinfo`对象，该对象描述了客户端连接的远程地址  
+第一个元素是建立好的连接，第二个元素是一个`Addrinfo`对象，该对象描述了客户端连接的远程地址  
 > Addrinfo  
 > Addrinfo 是一个Ruby类，描述了一台主机及其端口号。它将端点信息进行了包装。  
 > 可以使用`Addrinfo.tcp('localhost', 4481)`构建这些信息   
@@ -152,7 +151,7 @@ echo ohai | nc localhost 4481
 > 文件描述符编号是内核用于跟踪当前进程所打开文件的一种方法(套接字是文件)  
 
 #### 连接地址
-每一个TCP连接诶都由`local_address`(本地主机的端点)，`remote_address`(另一端端点)组成
+每一个TCP连接都由`local_address`(本地主机的端点)，`remote_address`(另一端端点)组成
 
 #### accpet循环
 `accept`会返回一个连接，前面的代码，服务器在接受了一个连接后退出，这个是不行的：
@@ -192,7 +191,7 @@ server.bind(addr)
 server.listen(128)
 connection, _ = server.accept
 
-# 该连接随后也许不再需要写入数据，但是可能任然需要进行读取
+# 该连接随后也许不再需要写入数据，但是可能仍然需要进行读取
 connection.close_write
 
 # 该连接不再需要进行任何数据读写操作
@@ -232,6 +231,7 @@ connection.close
 require 'socket'
 
 server = TCPServer.new(4481)
+# #<TCPServer:fd 10>
 
 ```
 等同于
@@ -243,8 +243,8 @@ addr = Socket.pack_sockaddr_in(4481, '0.0.0.0')
 server.bind(addr)
 server.listen(5)
 ```
-> 创建一个TCPServer实例返回的实际上并不是Socket实例，而是TCPServer实例，两者的接口几乎一样，但是还是有些重要的差异  
-> 最明显的就是`TCPServer#accept`只返回连接，而不是返回remote_address  
+> 创建一个`TCPServer`实例返回的实际上并不是`Socket`实例，而是`TCPServer`实例，两者的接口几乎一样，但是还是有些重要的差异  
+> 最明显的就是`TCPServer#accept`只返回连接，而不是返回`remote_address`
 > 监听队列长度默认5，如果要设置，调用`TCPServer#listen`
 
 这个Ruby包装器会返回两个TCP套接字，一个可以通过IPv4连接，另一个可以通过IPv6连接，两者都在同一个端口上进行监听  
@@ -252,6 +252,7 @@ server.listen(5)
 require 'socket'
 
 servers = Socket.tcp_server_socket(4481)
+# [#<Socket:fd 11>, #<Socket:fd 12>]
 ```
 
 #### 连接处理
@@ -286,7 +287,7 @@ Socket.tcp_server_loop(4481) do |connection|
   connection.close
 end
 ```
-不能简洁诶更多，它只是`Socket.tcp_server_sockets`和`Socket.accept_loop`的一个包装器  
+不能简洁更多，它只是`Socket.tcp_server_sockets`和`Socket.accept_loop`的一个包装器  
 
 
 ## 客户端的生命周期
@@ -357,3 +358,252 @@ end
 
 # 如果省略代码参数，则行为方式同TCPSocket.new()一样
 ```
+
+## 交换数据
+### 流
+TCP是一个基于流的协议(:STREAM)  
+从协议上而言，TCP在网络上发送的是分组   
+从程序代码上来说，TCP连接提供了一个不间断的、有序的通信流  
+> 流并没有消息边界的概念，即便是客户端分别发送了3分数据，服务器在读取的时候，也是将其作为一份数据来接受，它并不知道客户端那是分批发送的数据，但是流的内容的次序还是会被保留的  
+
+### 套接字操作
+#### 简单的读操作
+```ruby
+require 'socket'
+
+Socket.tcp_server_loop(4481) do |connection|
+  # 从连接中读取数据最简单的方法
+  puts connection.read
+  # 关闭连接，让客户端知道不用再等待数据返回
+  connection.close
+end
+```
+> Ruby的各种套接字类以及File的IO都有一个共同的父类。Ruby中所有的IO对象(套接字，管道，文件...)都有一套通用的接口，支持`read`,`write`,`flush`等方法  
+
+#### 没那么简单
+读很容易出错
+```shell
+tail -f /var/system.log | nc localhost 4481
+```
+服务器永远不会停止读取数据，因为`tail -f` 不会停止发送数据，所以`netcat`的管道一直出于打开状态  
+
+#### 不成熟的解决方案
+##### 读取长度
+指定最小的读取长度
+```ruby
+require 'socket'
+one_kb = 1024 # 字节
+
+Socket.tcp_server_loo
+  # 以1KB为单位进行读取
+  while data = connection.read(one_kb) do
+    puts data
+  end
+
+  connection.close
+end
+```
+
+#### 堵塞的本质
+`read`调用会一直堵塞，知道获取了完成长度(full length)的数据为止，上面的例子是1KB    
+但是如果客户端只发送了500B，那么就会造成死锁，解决方案：  
+1. 客户端发送完500B后发送一个EOF  
+2. 服务器采用部分读取(partial read)的方式  
+
+#### EOF事件
+当连接上调用read并接收到EOF事件时，就可以确定不会再有数据，可以停止读取了  
+EOF并不是一个字符，EOF更想是一个状态事件(state event)  
+如果一个套接字没有数据可写，它可以使用`shutdown`或`close`来表明自己不再需要写入任何数据。这就会导致一个EOF事件被发送给另一端  
+```ruby
+require 'socket'
+one_kb = 1023
+
+Socket.tcp_server_loop(4481) do |connection|
+  while data = connection.read(one_kb) do
+    puts data
+  end
+
+  connection.close
+end
+```
+客户端
+```ruby
+require 'socket'
+
+client = TCPSocket.new('localhost', 4481)
+client.write('gekko')
+client.close
+# 客户端发送EOF最简单的方式就是关闭自己的套接字
+```
+
+#### 部分读取
+`readpartial`不会堵塞，而是立即返回可用的数据，调用`readpartial`时，必须传递一个整数作为参数，来指定最大长度。  
+`readpartial`最多读取到指定长度。如果指明1KB数据，但是客户端只发送了500B，并不会堵塞，它会立即将已读取到的数据返回  
+服务器：
+```ruby
+require 'socket'
+one_hundred_kb = 1024 * 100
+
+Socket.tcp_server_loop(4481) do |connection|
+  begin
+    # 每次去读100KB或更少
+    while data = connection.readpartial(one_hundred_kb) do
+      puts data
+    end
+  rescue EOFError
+  end
+
+  connection.close
+end
+```
+就EOF而言，`readpartial`的工作方式不同于`read`，当接到EOF时，`read`仅仅是返回，而`readpartial`会产生一个`EOFError`异常
+
+
+## 套接字的写操作
+只有一种方式可以向套接字写入数据`write`
+```ruby
+require 'socket'
+
+Socket.tcp_server_lopp(4481) do |connection|
+  connection.write('Welcome!')
+  connection.close
+end
+```
+
+## 缓冲
+几个重要的问题：  
+1. 在一次调用中，应该读/写多少数据  
+2. 如果write成功返回，是否意味着连接的另一端已经接收到了数据  
+3. 是否应该将一个大数据量的write分割成多个小数据量进行多次写入
+
+### 写缓冲
+TCP连接上，`write`写入时究竟发生了什么？  
+`write`调用并返回时，就算没有引发异常，也不代表数据已经通过网络顺利发送并被客户端套接字接收到  
+`write`返回时，它只是表明你已经将数据交给Ruby的IO系统和底层的操作系统内核  
+在应用程序代码和实际的网络硬件之间至少还存在一个缓冲层  
+TCP套接字默认将sync设为true。这就逃过了Ruby的内部缓冲，否则就又要多出一个缓冲层了  
+> 为什么要缓冲区
+> 提高性能。将缓慢的网络发送过程交由幕后操作，让`write`可以立即返回。幕后还可以将所有还未执行的写操作汇总到一起，在发送时进行分组及优化，在实现最佳性能的同事避免网络过载。在网络层面上，发送大量的小分组会引发客观的开销
+
+### 该写入多少数据
+由于缓冲区的存在，我们不需要考虑这个问题，但是如果是大文件，或者大数据，最好先将这些数据进行分割，避免全部载入到内存中  
+
+### 读缓冲
+读操作同样会被缓冲  
+比如，`read`从TCP连接中读取数据并给它传递一个最大的读取长度，Ruby实际上可能会接受大于所指定长度的数据  
+多出来的数据被存储在Ruby内部的缓冲区中，在下次调用`read`时，Ruby会先查看自己的内部缓冲区中有没有未读取的数据，然后通过系统内核请求更多的数据  
+
+### 该读取多少数据
+如果指定太大的话，会浪费内核分配的内存  
+太小的话会导致系统的频繁调用  
+参考大多数的项目，多采用了`readpartial(1024 * 16)`16KB作为读取长度  
+> 记住 16KB
+
+## 第一个客户端服务器
+### 服务器
+```ruby
+require 'socket'
+
+module CloudHash
+  class Server
+    def initialize(port)
+      # 创建底层的服务器套接字
+      @server  = TCPServer.new(port)
+      puts "Listening on port #{@server.localhost_address.ip_port}"
+      @storage = {}
+    end
+
+    def start
+      # accept 循环
+      Socket.accept_loop(@server) do |connection|
+        handle(connection)
+        connection.close
+      end
+    end
+
+    def handle(connection)
+      request = connection.read
+      connection.write process(request)
+    end
+
+    # 所支持的命令：
+    # SET key value
+    # GET key
+    def Process(request)
+      command, key, value = request.split
+      case command.upcase
+      when 'GET'
+        @storage[key]
+
+      when 'SET'
+        @storage[key] = value
+      end
+    end
+
+  end
+end
+
+server = CloudHash::Server.new(4481)
+server.start
+```
+
+### 客户端
+```ruby
+require 'socket'
+
+module CloudHash
+  class Client
+    class << self
+      attr_accessor :host, :port
+    end
+
+    def self.get(key)
+      request "GET #{key}"
+    end
+
+    def self.set(key, value)
+      request "SET #{key} #{value}"
+    end
+
+    def self.request(string)
+      # 每一个新请求创建一个新连接
+      @client = TCPSocket.new(host, port)
+      @client.write(string)
+
+      # 完成请求后发送EOF
+      @client.close_write
+
+      # 一直读取到EOF来获取响应信息
+      @client.read
+    end
+  end
+end
+
+CloudHash::Client.host = 'localhost'
+CloudHash::Client.port = 4481
+```
+使用
+```ruby
+puts CloudHash::Client.set 'prez', 'obama'
+puts CloudHash::Client.get 'prez'
+puts CloudHash::Client.get 'vp'
+```
+
+### 投入运行
+```shell
+ruby code/cloud_hash/server.rb
+```
+
+```shell
+tail -4 code/cloud_hash/client.rb
+puts CloudHash::Client.set 'prez', 'obama'
+puts CloudHash::Client.get 'prez'
+puts CloudHash::Client.get 'vp'
+
+ruby code/cloud_hash/client.rb
+```
+
+## 套接字选项
+套接字选项是一种配置特定系统下套接字行为的低层手法，因为涉及低层设置，所以并没有这方面的系统调用提供便捷的包装器  
+
+### SO_TYPE
