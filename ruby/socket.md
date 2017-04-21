@@ -606,4 +606,252 @@ ruby code/cloud_hash/client.rb
 ## 套接字选项
 套接字选项是一种配置特定系统下套接字行为的低层手法，因为涉及低层设置，所以并没有这方面的系统调用提供便捷的包装器  
 
-### SO_TYPE
+### 套接字选项
+#### SO_TYPE (指连接类型)
+```ruby
+require 'socket'
+
+scoket = TCPSocket.new('google', 80)
+# 获得一个描述套接字类型的Socket::Option实例
+opt = socket.getsockopt(Socket::SOL_SOCKET, Socket::SO_TYPE)
+
+# 将描述该选项的整数值通存储在Socket::SOCK_STREAM中的整数进行比较
+opt.int == Socket::SOCK_STREAM # => true
+opt.int == Socket::SOCK_DGRAM  # => false
+```
+`getsockopt`返回一个`Socket::Option`实例，在这个层面上进行操作时，所有一切都被转化成整数，因此`SocketOption#int`可以获得与返回值相关联的底层的整数值  
+上例中，将int值通各种`Socket`类型常量进行比较，发现这是一个`STREAM`套接字  
+上例也可以写成这样  
+```ruby
+require 'socket'
+
+socket = TCPSocket.new('google.com', 80)
+# 使用符号
+opt = socket.getsockopt(:SOCKET, :TYPE)
+```
+
+#### SO_REUSE_ADDR ()
+每个服务器都应该设置的一个常见选项  
+`SO_REUSE_ADDR`选项告诉内核：如果服务器当前处于`TIME_WAIT`状态，即便另一个套接字要绑定(bind)到服务器目前所使用的本地地址也无妨
+> TIME_WAIT状态  
+> 当关闭了(close)了某个缓冲区，但其中仍有未处理数据套接字之时就会出现`TIME_WAIT`状态，前面说过，调用`write`值保证数据进入了缓冲区，当关闭一个套接字时，它未处理的数据并不会被丢弃，内核会保持足够长的打开时间，等待接收方的确认  
+> 如果关闭一个尚有数据未处理的服务器并立即将同一个地址绑定到另一个套接字上(比如重启服务器)，则会引发一个`Errno::EADDRINUSE`。除非未处理的数据被丢弃，设置`SO_REUSE_ADDR`可以绕过这个问题，使的可以绑定到一个处于`TIME_WAIT`状态的套接字所使用的地址上  
+
+```ruby
+# 如何打开这个选项
+require 'socket'
+
+server = TCPServer.new('localhost', 4481)
+server.setsockopt(:SOCKET, :REUSEADDR, true)
+
+server.getsocketopt(:SOCKET, :REUSEADDR)  # => true
+
+# TCPServer.new、Socket.tcp_server_loop以及类似的方法都默认打开了此选项
+```
+> `setsockopt(2)`可以查看系统上可用的套接字选项的完整列表
+
+## 非阻塞式IO
+### 非阻塞式读操作
+`read`会一直保持堵塞  
+`readpartial`可以暂时解决堵塞，`readpartial`会立即返回所有的可用数据，但如果没有数据可用，那么它人就会陷入拥塞  
+`read_nonblock`不会堵塞，和`readpartial`类似，`read_nonblock`需要一个整数的参数，指定需要读取的最大字节数
+```ruby
+require 'socket'
+
+Socket.tcp_server_loop(4481) do |connection|
+  # 注意这里使用了一个循环，要不然，read_nonblock读完就过了
+  loop do
+    begin
+      puts connection.read_nonblock(4096)
+    rescue Errno::EAGAIN
+      retry
+    rescue EOFError
+      break
+    end
+  end
+
+  connection.close
+end
+```
+
+```shell
+tail -f /var/log/system.log | nc localhost 4481
+```
+即便没有发送数据，`read_nonblock`调用仍然会立即返回，事实上，它产生了一个Errno::EAGAIN异常
+> EAGAIN  
+> 文件被标记用于非堵塞式IO，无数据可读  
+
+对被堵塞的读曹禺进行重试的正确做法是使用`IO.select`
+```ruby
+begin
+  connection.read_nonblock(4096)
+rescue Errno::EAGAIN
+  IO.select([connection])
+  # 一个堵塞方法，直到connection(或数组中的任一个)变得可读
+  retry
+end
+```
+使用套接字数组作为`IO.select`调用的第一个参数将会造成堵塞，直到其中的某个套接字变得可读。所以应该仅当套接字有数据可读时才调用`retry`  
+很神奇的用非堵塞方法重新实现了堵塞式的`read`方法，当然这本身没有什么用处  
+`IO.select`提供了一种灵活性，可以在进行其他工作的同时监控多个套接字或是定期检查他们的可读性   
+根据自身使用情况：`read_nonblock`会一直抛出异常，直到获取到了一个返回   
+> 什么时候读操作会堵塞  
+> `read_nonblock`首先会检查Ruby的内部缓冲区时候还有未处理的数据，如果有，立即返回  
+> 然后`read_nonblock`会询问内核时候有其他可用的数据可供`select`读取，如果有，不管这些数据是在内核缓冲区还是网络中，都会被立即返回。其他情况都会使`read`堵塞，并在`read_nonblock`中引发异常  
+
+### 非堵塞式写操作
+`write_nonblock`可能会返回部分写入的结果，`write`总是将数据全部写入
+```ruby
+require 'socket'
+
+client = TCPSocket.new('locahost', 4481)
+payload = 'xxx' * 10_000
+
+written = cloent.write_nonblock(payload)
+written < payload.size #=> true>
+# 写入的数据小于负载的数据长度
+```
+当`write_nonblock`碰上了某种使它堵塞的情况，因此也就没法进行写入，所以返回了整数值，表示写入了多少数据  
+`write_nonblock`的行为和系统调用`write(2)`一模一样，它尽可能多地写入数据并返回写入的数量。这和Ruby的`write`方法不同，后者可能会多次调用`write(2)`写入所有的请求数据  
+这个时候可以调用`IO.select`，它可以显示某个套接字可写，这意味着可以进行无阻塞的进行写入
+```ruby
+require 'socket'
+
+client = TCPSocket.new('localhost', 4481)
+payload = 'xxx' * 10_000
+
+begin
+  loop do
+    bytes = client.write_nonblock(payload)
+
+    break if bytes >= payload.size
+    payload.slice!(0, bytes)
+    IO.select(nil, [client])
+  end
+rescue Errno::EAGAIN
+  IO.select(nil, [client])
+  retry
+end
+```
+> 什么时候会写操作堵塞
+> 1. TCP连接的接收端还没有确认接收到对方的数据，而发送方已经发送了所允许发送的数据量。  
+_TCP使用拥塞控制算法确保网络不会被分组所淹没。如果数据花费了很长时间才到达TCP连接的接收端，那么要注意不要发送超出网络处理能力的数据，以免网络过载_   
+> 2. TCP连接的接收端无力处理更多的数据   
+_即便是另一端已经确认接收到了数据，它仍必须清空自己的数据窗口，以便重新填入其他数据。这设计内核的读缓冲区。如果接收端没有处理它接收的数据，那么堵塞控制算法会强制发送端阻塞，直到客户端可以接受更多的数据为止_  
+
+### 非拥塞式接收
+非堵塞式`read`和`write`用得最多，但别的方法也有非堵塞形式  
+`accept_nonblock`和普通的`accept`几乎一样。  
+`accept`只是从侦听队列中弹出一个连接，如果侦听队列为空，那`accept`就得堵塞，而`accept_nonblock`就不会堵塞，只是产生一个`Errno::EAGAIN`
+```ruby
+require 'socket'
+
+server = TCPServer.new(4481)
+
+loop do
+  begin
+    connection = server.accept_nonblock
+  rescue Errno::EAGAIN
+    retry
+  end
+end
+```
+
+### 非堵塞时连接
+`connect_nonblock`和其他非堵塞式IO方法有些不同  
+其他方法要么是完成操作，要么产生一个异常，儿`connect_nonblock`则是保持操作继续运行，并产生一个异常  
+如果`connect_nonblock`不能立即发起到远程主机的连接，它会在后台继续执行操作，并产生`Errno::EINPROGRESS`，提醒我们操作仍在进行中  
+```ruby
+require 'socket'
+
+socket = Socket.new(:INET, :STREAM)
+remote_addr = Socket.pack_sockaddr_in(80, 'google.com')
+
+begin
+  # 发起一个非堵塞式连接
+  socket.connect_nonblock(remote_address)
+rescue Errno::EINPROGRESS
+  # 操作在进行中
+rescue Errno::EALREADY
+  # 之前的非堵塞式连接已经在进行当中
+rescue Errno::ECONNREFUSED
+  # 远程主机拒绝连接
+end
+```
+
+## 连接复用
+连接复用是指同事处理多个活动套接字(不是并行，和多线程无关)  
+利用非堵塞式IO来避免在特定的套接字啥功能陷入停止，以实现一个多条TCP连接中的可用数据的服务器
+```ruby
+# 创建一个连接数组
+connections = [<TCPSocket>, <TCPSocket>, <TCPSocket>]
+
+loop do
+  # 处理每个连接
+  connections.each do |conn|
+    begin
+      # 采用非堵塞的方式从每个连接中进行读取
+      # 处理接收到的任何数据，不然就尝试下一个连接
+      data = conn.read_nonblock(4096)
+      process(data)
+    rescue Errno::EAGAIN
+    end
+  end
+end
+```
+每一次`read_nonblock`都需要使用至少一个系统调用，如果没有数据可读，服务器会浪费大量的处理周期。这时候就要使用`select(2)`了
+
+### select(2)
+下面是处理多个TCP连接中可用数据的更好的方法
+```ruby
+connections = [<TCPSocket>, <TCPSocket>, <TCPSocket>]
+
+loop do
+  # 查询select哪一个连接诶可以进行读取
+  # 接受若干个对象，然后告知哪一个可以进行读写
+  ready = IO.select(connections)
+
+  # 从可用连接中进行读取
+  readable_connections = ready[0]
+  readabel_connections.each do |conn|
+    data = conn.readpartial(4096)
+    process(data)
+  end
+end
+```
+`IO.select`极大的降低了处理多个连接的开销  
+
+#### IO.select的一些参数
+`select`可以使用三个数组作为参数
+```ruby
+for_reading = [<TCPSocket>, <TCPSocket>, <TCPSocket>]
+for_writing = [<TCPSocket>, <TCPSocket>, <TCPSocket>]
+
+IO.select(for_reading, for_writing, for_writing)
+
+# => [[<TCPSocket>], [], []]
+```
+第一个参数是希望从中进行读取的IO对象数组  
+第二个参数是希望进行写入的IO对象数组  
+第三个参数是可以忽略，除非对带外数据(out-of-band data)感兴趣  
+注意，参数只能是数组  
+`IO.select`返回一个包含三个元素的嵌套数组，分别对应它的参数列表，
+第一个元素包含可供无拥塞读取的IO对象  
+第二个元素包含看可以进行无拥塞写入的IO对象  
+第三个元素包含了使用异常条件的对象  
+
+> IO.select会阻塞，它是一个同步方法调用
+
+其实`IO.select`还有第四个参数，一个整数或浮点数，指定超时，返回`nil`  
+
+### 读/写之外的事件
+`IO.select`可以监视套接字的读写状态，其实，它还有一些其他的作用  
+
+#### EOF
+如果监视某个套接字的可读性时，它接收到了一个`EOF`，那么该套接字会作为可读套接字数组的一部分被返回
+
+#### accept
+在监视某个服务器套接字的可读性时，它收到了一个接入的连接，那么个该套接字会作为可读套接字数组的一部分返回  
+
+#### connect
+上面说过，
