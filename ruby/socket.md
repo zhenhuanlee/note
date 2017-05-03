@@ -412,7 +412,7 @@ end
 
 #### EOF事件
 当连接上调用read并接收到EOF事件时，就可以确定不会再有数据，可以停止读取了  
-EOF并不是一个字符，EOF更想是一个状态事件(state event)  
+EOF并不是一个字符，EOF更像是一个状态事件(state event)  
 如果一个套接字没有数据可写，它可以使用`shutdown`或`close`来表明自己不再需要写入任何数据。这就会导致一个EOF事件被发送给另一端  
 ```ruby
 require 'socket'
@@ -681,7 +681,7 @@ tail -f /var/log/system.log | nc localhost 4481
 > EAGAIN  
 > 文件被标记用于非堵塞式IO，无数据可读  
 
-对被堵塞的读曹禺进行重试的正确做法是使用`IO.select`
+对被堵塞的读操作进行重试的正确做法是使用`IO.select`
 ```ruby
 begin
   connection.read_nonblock(4096)
@@ -707,7 +707,7 @@ require 'socket'
 client = TCPSocket.new('locahost', 4481)
 payload = 'xxx' * 10_000
 
-written = cloent.write_nonblock(payload)
+written = client.write_nonblock(payload)
 written < payload.size #=> true>
 # 写入的数据小于负载的数据长度
 ```
@@ -759,7 +759,7 @@ end
 
 ### 非堵塞时连接
 `connect_nonblock`和其他非堵塞式IO方法有些不同  
-其他方法要么是完成操作，要么产生一个异常，儿`connect_nonblock`则是保持操作继续运行，并产生一个异常  
+其他方法要么是完成操作，要么产生一个异常，而`connect_nonblock`则是保持操作继续运行，并产生一个异常  
 如果`connect_nonblock`不能立即发起到远程主机的连接，它会在后台继续执行操作，并产生`Errno::EINPROGRESS`，提醒我们操作仍在进行中  
 ```ruby
 require 'socket'
@@ -780,8 +780,8 @@ end
 ```
 
 ## 连接复用
-连接复用是指同事处理多个活动套接字(不是并行，和多线程无关)  
-利用非堵塞式IO来避免在特定的套接字啥功能陷入停止，以实现一个多条TCP连接中的可用数据的服务器
+连接复用是指同时处理多个活动套接字(不是并行，和多线程无关)  
+利用非堵塞式IO来避免在特定的套接字功能上陷入停止，以实现一个多条TCP连接中的可用数据的服务器
 ```ruby
 # 创建一个连接数组
 connections = [<TCPSocket>, <TCPSocket>, <TCPSocket>]
@@ -851,7 +851,58 @@ IO.select(for_reading, for_writing, for_writing)
 如果监视某个套接字的可读性时，它接收到了一个`EOF`，那么该套接字会作为可读套接字数组的一部分被返回
 
 #### accept
-在监视某个服务器套接字的可读性时，它收到了一个接入的连接，那么个该套接字会作为可读套接字数组的一部分返回  
+在监视某个服务器套接字的可读性时，它收到了一个接入的连接，那么个该套接字会作为可读套接字数组的一部分返回，这种套接字需要特殊处理，应该使用`accept`而不是`read`
 
 #### connect
-上面说过，
+上面说过，`connect_nonblock`如果不恩给你立刻完成连接，则会产生`Errno::EINPROGRESS`。可以使用`IO.select`了解后台连接是否已经完成  
+```ruby
+require 'socket'
+
+socket = Socket.new(:INET, :STREAM)
+remote_addr = Socket.pack_sockAddr_in(80, 'google.com')
+
+begin
+  socket.connect_nonblock(remoter_addr)
+rescue Errno::EINPROGRESS
+  IO.select(nil, [socket])
+
+  begin
+    socket.connect_nonblock(remote_addr)
+  rescue Errno::EISCONN
+    # 成功
+  rescue Errno::ECONNREFUSED
+    # 被远程主机拒绝
+  end
+end
+```
+这段代码尝试进行`connect_nonblock`并处理`Errno::EINPROGRESS`，这意味着连接过程发生在后台  
+利用`IO.select`监视套接字状态是否变得可写。如果发生改变，就可以确定底层的连接已经完成，为了获知状态，我们只需要再次试用`connect_nonblock`即可，如果产生了`Errno::EISCONN`就表明套接字已经连接到远程主机。其他异常表明连接远程主机时出现错误     
+
+### 高性能复用
+`IO.select`是ruby中进行复用的唯一手段。大多数操作系统支持多种复用方法，`select`几乎是这些方法中最古老，用的最少的  
+`IO.select`的性能通它所监视的连接数呈线性关系，而且`select`系统调用收到`FD_SETSIZE`的限制，这是一个定义在本地C代码库中的宏。`select`无法对编号大于`FD_SETSIZE`(多数系统是1024)的文件描述符进行监视  
+Linux的`epoll`以及BSD的`kqueue`系统调用比`select`和`poll`的效果更好，更能更先进  
+
+## Nagle算法
+Nagle算法是一种默认应用于所有的TCP连接的优化  
+这种优化最适合那些不进行缓冲，每次值发送很少数据量的应用程序(不满足这些条件的服务器应该禁用)  
+来，看下算法  
+程序向套接字执行写操作后，有下面3种可能：  
+1. 如果本地缓冲区中有足够的数据可以组成一个完成的TCP分组，立即发送  
+2. 如果本地缓冲区没有尚未处理的数据，接收端的数据也都全部已经确认接收，那么就立即发送  
+3. 如果接收端还有未确定的答复(acknowledgement)，也没有足够的数据组成一个完整的TCP分组，那么就将数据放入本地缓冲区  
+该算法避免发送大量的微型TCP分组(telnet协议，每次敲击键盘，字符都会被立刻发送到网络上)  
+如果是HTTP协议，它的请求/响应至少能够组成一个TCP分组，因此Nagle算法除了会延缓最后一个分组发送之外，一般不会造成什么影响  
+考虑到Ruby缓冲以及TCP之上所实现的大部分常用协议，应该禁用该选项  
+```ruby
+require 'socket'
+
+server = TCPServer.new(4481)
+
+# 禁用Nagle算法
+server.setsockopt(Socket::IPPROTO_CTP, Socket::TCP_NODELAY, 1)
+```
+
+### 消息划分
+之前都是`EOF`来表明消息的终止，每次都是一个新连接，增加了开销   
+> 多条消息重用连接的想法同HTTP keep-alive特性背后的理念是一样的，在多个请求间保持连接开放(包括客户端和服务器协商的划分消息的方法)，通过避免打开新的连接节省资源  
