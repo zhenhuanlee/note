@@ -201,30 +201,30 @@ footer = *entity-header
 ## HTTP头字段总结
 1. Accept: 告诉服务器自己接受什么介质类型，`/`表示任何类型，`type/*`表示该类型下的所有子类型`type/subtype`  
 2. Accept-Charset: 浏览器声明自己接受的字符集  
-  - Accept-Encoding: 浏览器声明自己接受的编码方式，通常指定压缩方法，是否支持，支持哪些(gzip, deflate)  
-  - Accept-Language: 浏览器声明自己接受的语言(中文是语言，中文有多种字符集big5, gb2312等)    
+    - Accept-Encoding: 浏览器声明自己接受的编码方式，通常指定压缩方法，是否支持，支持哪些(gzip, deflate)  
+    - Accept-Language: 浏览器声明自己接受的语言(中文是语言，中文有多种字符集big5, gb2312等)    
 3. Accept-Ranges: 服务器表明自己是否接受获取某个实体的一部分的请求(如文件的一部分)。bytes：接受，none：不接受  
 4. Age: 当代理服务器用自己缓存的实体去响应请求时，用该头部表明该实体从产生到现在经过了多长时间  
 5. Authorization: 当客户端接收到来自服务器的`WWW-Authenticate`响应时，用该头部来回应自己的身份验证信息  
 6. Cache-Control:   
-  请求:  
-  - no-chche: 不要缓存的实体  
-  - max-age: 只接受Age小余max-age的  
-  - min-fresh: 接受新鲜声明期大于当前Age和min-fresh值之和的缓存对象  
-  响应:  
-  - public: 可以用Cached内容回应任何用户  
-  - private: 值能用缓存内容回应先前请求该内容的那个用户  
-  - no-cache: 可以缓存，但是只有在和web服务器验证了其有效后才能返回给客户端  
-  - max-age: 本响应包含的对象的过期时间  
-  - ALL:no-store: 不允许缓存  
+    请求:  
+    - no-chche: 不要缓存的实体  
+    - max-age: 只接受Age小余max-age的  
+    - min-fresh: 接受新鲜声明期大于当前Age和min-fresh值之和的缓存对象  
+    响应:  
+    - public: 可以用Cached内容回应任何用户  
+    - private: 值能用缓存内容回应先前请求该内容的那个用户  
+    - no-cache: 可以缓存，但是只有在和web服务器验证了其有效后才能返回给客户端  
+    - max-age: 本响应包含的对象的过期时间  
+    - ALL:no-store: 不允许缓存  
 7. connection:  
-  请求:
-  - close: 告诉服务器或代理服务器，在完成本次请求的响应后断开连接  
-  - keepalive: 告诉web服务器，保持连接，等待后续请求  
-  响应:  
-  - close: 连接已经关闭  
-  - keepalive: 保持连接，等待后续请求  
-  - Keep-Alive: 如果浏览器请求保持连接，则改头部表明希望WEB服务器保持连接多长时间，如`Keep-alive: 300`  
+    请求:
+    - close: 告诉服务器或代理服务器，在完成本次请求的响应后断开连接  
+    - keepalive: 告诉web服务器，保持连接，等待后续请求  
+    响应:  
+    - close: 连接已经关闭  
+    - keepalive: 保持连接，等待后续请求  
+    - Keep-Alive: 如果浏览器请求保持连接，则改头部表明希望WEB服务器保持连接多长时间，如`Keep-alive: 300`  
 8. Content-Encoding: WEB服务器表明自己使用了什么压缩方法（gzip，deflate）压缩响应中的对象  
 9. Content-Language: WEB 服务器告诉浏览器自己响应的对象的语言  
 10. Content-Length: WEB 服务器告诉浏览器自己响应的对象的长度  
