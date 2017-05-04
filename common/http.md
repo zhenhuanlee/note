@@ -76,6 +76,11 @@ Modified)
 内容类型，一般指网页中存在的Content-Type，用于定义网络文件的类型和网页的编码，决定浏览器将以什么形式、什么编码来读取这个文件
 
 #### 表单的发包方式
+> 简单的来说，当表单中有文件`<input type='file'>`元素时，使用`multipart/form data`  
+> 永远不要使用`text/plain`（黑人问号）  
+> `application/x-www-form-urlencoded`或多或少的有点像URL后面的query参数  
+> `multipart/form-data`明显更复杂，但是允许整个文件被包含在数据中  
+
 **application/x-www-from-urlencoded**  
 常用的表单发包方式，普通的表单提交，或者js发包，默认都是这种
 ```html
@@ -138,9 +143,10 @@ Content-Type: text/xml
 </resouce>
 ```
 
-**application/json**  
-使用json形式将数据发送给服务器  
-可以方便的提交复杂的结构化数据，特别适合RESTful的接口
+~~**application/json**~~  
+~~使用json形式将数据发送给服务器~~  
+~~可以方便的提交复杂的结构化数据，特别适合RESTful的接口~~
+has been abandoned.
 
 # 附录
 ## Keep-Alive
