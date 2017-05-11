@@ -157,7 +157,7 @@ http1.1 默认开启，`Connection: close`关闭
 ### 特点：  
 1. 更少的建立和关闭连接，节省了CPU在的routers和hosts(clients,servers,proxies,gateway,tunels,caches)上面的时间开销  
 2. HTTP的请求和响应可以在一个连接中进行管道传输(pipelining)，管道传输允许客户端发出多个请求而不必等每个返回，使用一个独立的TCP连接更有效率和节约时间  
-3. 减少建立连接请求就减少了包的发送，从而减少了网络堵塞，and by allowing TCP sufficient time to determine the congestion state of the network.  
+3. 减少建立连接请求就减少了包的发送，从而减少了网络堵塞，让TCP有足够的时间决定网络的堵塞状况  
 4. 潜在的也减少了随之而来的请求，因为没有了握手请求  
 5. HTTP还需要改进，比如错误应该被提交而不是关闭连接，新的HTTP协议和老的服务器还有冲突，最好可以在错误被捕获后自动切换到老的协议  
 > 单用户客户端与任何服务器或代理之间的连接数不应该超过两个，一个代理与其他服务器或代码之间应该使用不超过2*N的活跃并发连接，这是为了提高HTTP响应时间，避免堵塞（冗余的连接并不能带来代码执行能力的提升）  
