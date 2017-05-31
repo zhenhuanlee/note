@@ -125,4 +125,29 @@ app自动加载了`rails/application/default_middleware_stack`，这个在`Actio
 ### Action Dispatch
 `Action Pack`是Rails用来处理请求和响应的。`Action
 Pack`是rails中少数几个精密的组件  
-所有的中间件都是遵循这样的定义：他们都响应`call`，接受一个app(?)，然后返回status，headers，body。他们都很多都使用`Rack::Request`和`Rack::Response`对象   
+所有的中间件都是遵循这样的定义：响应`call`，接受一个app(?)，然后返回status，headers，body。他们都很多都使用`Rack::Request`和`Rack::Response`对象   
+
+### Adding Your Own Middleware
+现在有两个app，Rails API(`https://api.example.com`)和JS APP(`https://app.example.com`)，因为CROS的原因，JS端不能访问api端的资源，解决方法之一就是使用`Rack::Cors middleware gem`  
+```ruby
+gem "rack-cors", require: "rack/cors"
+```
+
+Rails提供了非常简单的方法去加载中间件，虽然我们一定可以在`config.ru`的`Rack::Builder`中添加它，但是Rails的惯例是在`config/application.rb`中配置  
+```ruby
+module MyApp
+  class Application < Rails::Application
+    config.middleware.insert_before 0, "Rack::Cors" do
+      allow do
+        origins '*'
+        resource '*',
+        :headers => :any,
+        :expose => ['X-User-Authentication-Token', 'X-User-Id'],
+        :methods => [:get, :post, :options, :patch, :delete] 
+      end
+    end
+  end
+end
+```
+`insert_before`去保证`Rack::Cors`在`ActionPack`堆中加载的其他中间件之前调用  
+
