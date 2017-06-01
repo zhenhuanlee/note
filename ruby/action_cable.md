@@ -121,3 +121,63 @@ class ChatChannel < Application::Channel
   end
 end
 ```
+如果有一个流是关联model的，那么这个广播流可以通过model和channel来生成，下面的例子会订阅一个`comments:Z2lkOi8vVGVzdEFwcC9Qb3N0LzE`这样的广播  
+```ruby
+class CommentsChannel < ApplicationCable::Channel
+  def subscribed
+    post = Post.find(params[:id])
+    stream_for post
+  end
+end
+```
+然后就可以向下面这样向频道广播了  
+```ruby
+CommentsChannel.broadcast_to(@post, @comment)
+```
+
+### Broadcasting
+`broadcasting`是一个发送者向订阅者发送流的连接，每个`channel`可以发送0~n个`broadcasting`  
+`broadcastings`是依赖实践的在线队列，如果一个用户没有使用流(订阅频道)，他们将不收到这个广播，即使他们之后进行了连接  
+`broadcasts`在别的地方被调用  
+```ruby
+WebNotificationChannel.broadcast_to(
+  current_user,
+  title: 'New things!',
+  body: 'All the news fit to print'
+)
+```
+这个`WebNotificationsChannel.broadcast_to`调用会推送一条消息给当前的订阅适配器(默认的，生产环境是redis，其他是async)的发布订阅队列，每个用户的广播名都是独一无二的，如一个ID是1的用户，广播名是`web_notifications:1`  
+通过调用`received`这个回调，`channel`会使用流把到`web_notifications:1`的信息直接发送给客户端  
+
+### Subscriptions
+当一个用户订阅了`channel`，他就成了一个订阅者。这个`connection`叫做一个订阅。收到的消息会被路由到这些基于用户标识区分的订阅  
+```coffee 
+# app/assets/javascripts/cable/subscriptions/chat.coffee
+# Assumes you've already requested the right to send web 
+notifications
+App.cable.subscriptions.create { channel: "ChatChannel", room: "Best Room" },
+  received: (data) ->
+
+  appendLine: (data) ->
+    html = @createLine(data)
+    $("[data-chat-room='Best Room']").append(html)
+
+  createLine: (data) ->
+    """
+    <article class="chat-line">
+      <span class="speaker">#{data["sent_by"]}</span>
+      <span class="body">#{data["body"]}</span>
+    </article>
+    """
+```
+
+### Passing Parameters to Channels
+可以从客户端传参到服务端通过创建一个订阅
+```ruby
+# app/channels/chat_channel.rb
+class ChatChannel < ApplicationCable::Channel
+  def subscribed
+    stream_from "chat_#{params[:room]}"
+  end
+end
+```
