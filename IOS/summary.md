@@ -1,3 +1,56 @@
+#### file's owner 以及 outlet 与连线
+xib是一个xml文件，app启动的时候会根据xml结构构造xib对应的界面及其控件  
+file's owner 是对应的类，比如view对应的xib文件的file's owner对应的就是viewcontrol类  
+outlet是针对xib文件中希望能够在外部引用的控件成员  
+file's owner 和 label 之间的连线确定了代码中的outlet控件与xib中的控件的对应  
+
+假设有两个独立的视图CnView和EnView，CnBiew和EnView上分别有个Button和Label，对于CnView，点击Button，Label显示“你好”，
+EnView则显示"hello"  
+1. XIB文件  
+通过IB设计的CnView和EnView分别对应一个XIB文件，在CnView的XIB文件中，主要采用XML格式描述了Button和Label控件的属性，有个Button和Label，以及Button和Label的位置、大小等，EnView类似  
+2. ViewController  
+每个View对应有个视图控制器(多个View可以采用同一个视图控制器)，可以看做MVC中的C（其实不是），比如：CnView界面点击按钮之后的响应动作是由ViewController来实现的  
+3. XIB和ViewController之间的关系  
+XIB是表现，ViewController一方面响应XIB上的操作（点击，滑动等），同时也控制XIB的显示  
+4. File's Owner（重点）
+View和ViewController之间的对应关系，连接的桥梁(即，对于一个视图，它如何知道自己的界面的操作由谁来响应）  
+5. First Responder  
+View中每次都只会有一个对象与用户进行交互，当前交互的对象即为First Responder。比如点击文本框，那么此时文本框就是First Responder  
+6. 输出口  
+就是需要在代码里进行操作的控件。如果nib中的控件需要在代码中被修改，那么就要定义一个输出口指向这个控件，然后通过输出口来修改这个控件，输出口也就是一个指针指向了nib中的控件对象，使用关键字IBOutlet声明  
+7. 操作  
+触发一个控件后这个控件执行的方法。IBAction    
+IBAction告诉Interface Builder这是一个操作方法，可以被某个控件触发。返回值IBAction类似于void，不返回值，操作方法接收一个参数(id)sender，控件触发了操作后就把自己传给sender
+
+
+
+
+
+#### static/extern/内存分区说明
+![内存分区示意图](http://img.blog.csdn.net/20170322161843508)  
+##### 对象指针存放在栈区，
+
+
+#### extern, static, const
+1. extern  
+  `extern`只能用来修饰全局变量，跨文件引用，如果在`.h`文件中声明了全局变量  
+  ```
+  #import <Foundation/Foundation.h>
+  @interface ExternModel : NSObject
+    // 这个是不合法的，因为OC的类会将这个全局变量当做成员变量来处理，而成员变量属性是要加{}的
+    NSString *lhString; //声明全局变量的时候默认带有extern，这里必须显示声明
+    // 正确的写法
+    extern NSString *lhString; //这里由于带有extern会被认为是全局变量
+  @end
+  ```
+
+#### MOVE
+- M  Model  
+- O  Operation Tree  
+- V  View Tree  
+- E  Events Changes
+
+
 #### UIApplication
 `UIApplication`对象是应用程序的象征，一个`UIApplication`对象就代表一个应用程序  
 `UIApplication`对象可以进行一些应用级别的操作：
