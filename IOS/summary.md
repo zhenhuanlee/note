@@ -1,3 +1,42 @@
+#### OC遍历数组和字典  
+1. for循环  
+2. for-in 遍历  
+3. 枚举器  
+遍历数组
+```objective-c
+NSArray *array = @[@"2", @"3", @"3"];
+
+// 获取数组枚举器(正向枚举)
+NSEnumerator *enumerator = [array objectEnumerator];
+
+id value = nil;
+
+while (value = [enumerator nextObject]) {
+  NSlog(@"%@", value);
+}
+
+// 反向枚举(逆序)
+enumerator = [array reverseObjectEnumerator];
+
+value = nil;
+while (value = [enumerator nextObject]) {
+  NSLog(@"%@", value);
+}
+```
+遍历字典
+```objective-c
+NSDictionary *dic = [NSDictionary dictionaryWithObjectAndKeys:@"leeee", @"name",
+@"23", @"age"];
+
+NSEnumerator *enumerator2 = [dic objectEnumerator];
+
+id value2 = nil;
+
+while (value2 = [enumerator2 nextObject]) {
+  NSLog(@"%@", value2);
+}
+```
+
 #### file's owner 以及 outlet 与连线
 xib是一个xml文件，app启动的时候会根据xml结构构造xib对应的界面及其控件  
 file's owner 是对应的类，比如view对应的xib文件的file's owner对应的就是viewcontrol类  
