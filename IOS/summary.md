@@ -1,3 +1,40 @@
+#### typedef
+作用：给类型起别名，常用语简化复杂类型，变量类型意义化等  
+```objective-c
+typedef double NSTimeInterval;  // 给double取别名为NSTimeInterval（变量类型意义化）
+typedef NSTimeInterval MyTime;  // 给NSTimeInterval取别名为MyTime
+typedef char * MyString;        // 给char * 取别名为MyString
+
+typedef struct Person
+{
+  char *name
+}MyPerson;  // 给Person结构体取别名为MyPerson。使用：MyPerson p = {"Jack"};
+
+typedef enum Gender
+{
+  Man,
+  Woman
+} MyGender;   // 给Gender枚举类型取别名为MyGender。使用：MyGender g = Man;
+
+typedef void(^MyBlock) (int a, int b);  // 给block取别名为MyBlock
+typedef int(*MyFunction) (int a, int b); // 给指向函数的指针取别名为MyFunction
+```
+
+#### define
+作用文本替换（把出现的替换为定义的）  
+```object-c
+#define MyString @"hello world!" // MyString 替换后面的文本
+#define MyString2 Mystring       // MyString2替换为MyString
+```
+
+#### typedef 和 define使用注意
+- define 是文本替换，属于预编译指令，本身不参与编译，除非希望替换的文本中有`;`，否则不用加  
+  typedef 是类型替换，语句的一种  
+- define 写在方法/函数中则作用于从写的地方开始有小，直至使用`#undef`(不写此指令则后面一直有效)  
+  typedef 写在方法/函数中，则作用域只在此方法/函数中  
+- 若使用`typedef char * MyString;` 则`MyString s1, s2;`等价于`char *s1, *s2;`  
+  若使用`#define MyString char *`  则`MyString s1, s2;`等价于`char *s1,s2`即`char *s1; char s2`  
+
 #### OC遍历数组和字典  
 1. for循环  
 2. for-in 遍历  
