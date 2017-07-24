@@ -1,4 +1,37 @@
 # 贝塞尔曲线
+
+#### 函数
+```objective-c
++ (instancetype)bezierPath;  // 初始化贝塞尔曲线(无形状)
++ (instancetype)bezierPathWithRect:(CGRect)rect;  // 绘制矩形贝塞尔曲线
++ (instancetype)bezierPathWithOvalInRect:(CGRect)rect;  // 绘制椭圆曲线
++ (instancetype)bezierPathWithRoundRect:(CGRect)rect cornerRadius:(CGFloat)cornerRadius; //绘制带圆角的贝塞尔曲线
++ (instancetype)bezierPathWithRoundRect:(CGRect)rect byRoundingCorners:(UIRectCorner)corners cornerRadii:(CGSize)cornerRadii;  // 绘制可选圆角方位的贝塞尔曲线
++ (instancetype)bezierPathWithArcCenter:(CGPoint)center radius:(CGFloat)radius startAngle:(CGFloat)startAngle endAngle:(CGFloat)endAngle clockwise:(BOOL)clockwise;   //绘制圆弧曲线
++ (instancetype)bezierPathWithCGPath:(CGPathRef)CGPath; //根据CGPathRef绘制曲线
+```
+
+```objective-c
+- (void)moveToPoint:(CGPoint)point;  //贝塞尔曲线开始的点
+- (void)addLineToPoint:(CGPoint)point;  //添加直线到该点
+- (void)addCurveToPoint:(CGPoint)endPoint controlPoint1:(CGPoint)controlPoint1 controlPoint2:(CGPoint)controlPoint2;  //添加二次曲线到该点
+- (void)addQuadCurveToPoint:(CGPoint)endPoint controlPoint:(CGPoint)controlPoint; //添加曲线到该点
+- (void)addArcWithCenter:(CGPoint)center radius:(CGFloat)radius startAngle:(CGFloat)startAngle endAngle:(CGFloat)endAngle clockwise:(BOOL)clockwise NS_AVAILABLE_IOS(4_0);  //添加圆弧 注:上一个点会以直线的形式连接到圆弧的起点
+- (void)closePath;  //闭合曲线
+
+- (void)removeAllPoints; //去掉所有曲线点
+```
+
+```objective-c
+@property(nonatomic) CGFloat lineWidth;  //边框宽度
+@property(nonatomic) CGLineCap lineCapStyle;  //端点类型
+@property(nonatomic) CGLineJoin lineJoinStyle;  //线条连接类型
+@property(nonatomic) CGFloat miterLimit;  //线条最大宽度最大限制
+- (void)setLineDash:(nullable const CGFloat * )pattern count:(NSInteger)count phase:(CGFloat)phase;  //虚线类型
+- (void)fill;  //填充贝塞尔曲线内部
+- (void)stroke; //绘制贝塞尔曲线边框
+```
+
 #### 贝塞尔曲线是用一些列的点来控制曲线状态的，可以将这些点分为两类  
 - 数据点： 确定曲线的启始和结束位置  
 - 控制点： 确定曲线的弯曲程度  
