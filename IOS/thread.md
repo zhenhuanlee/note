@@ -2,6 +2,47 @@
 iOS的App启动之后，默认开启一条主线程(串行)并且开启[Runloop](http://blog.ibireme.com/2015/05/18/runloop/)来处理消息
 > 主线程应该能自由响应用户事件，并发也会带来一定的开销(调度)，增加编写和调试的难度    
 
+#### Runloop
+Runloop是一种循环，和while的循环不同，Runloop是一种‘闲’等待，可以类比linux的epoll。当没有事件时，Runloop会进入休眠状态，有事件发生时，Runloop会去对应的Handler处理事件。Runloop可以让线程在需要做事的时候忙起来，不需要的话就让线程休眠  
+![runloop](https://developer.apple.com/library/ios/documentation/Cocoa/Conceptual/Multithreading/Art/runloop.jpg)  
+从input source和timer source接受事件，然后线程中处理事件  
+
+#### Runloop与线程  
+Runloop和线程是绑定在一起的，每个线程(包括主线程)都有一个对应的Runloop对象。这个对象由系统提供，自己无法创建  
+主线程的Runloop会在应用启动的时候完成，其他线程的Runloop默认不会开启，需要手动启用  
+
+#### Imput Source & Timer Source
+这两个都是Runloop事件的来源  
+- Input Source：  
+  1. Prot-Based Sources，系统底层的port事件，如CFSocketRef，在应用底层基本用不到  
+  2. Custom Input Sources，用户手动创建的Source  
+  3. Cocoa Perform Selector Sources，Cocoa提供的performSelector系列方法，也是一种事件源  
+- Timer Source 定时器事件
+
+#### Runloop Observer
+Runloop通过监控Source来决定有没有任务要做，除此之外，我们可以用Runloop Observer来监控Runloop本身的状态  
+Runloop Observer可以监控下面的事件：  
+- The entrance to the run loop  
+- When the run loop is about to process a timer  
+- When the run loop is about to process an input source   
+- When the run loop is about to go to sleep  
+- When the run loop has woken up, but before is has processed the event that woke it up  
+- The exit for the run loop  
+
+#### Runloop Mode
+在监视与被监视中，Runloop要处理的事情还挺复杂的，为了让Runloop能专心处理自己关心的那部分事情，引入Runloop Mode概念  
+![mode](http://cc.cocimg.com/api/uploads/20150528/1432798883604537.png)  
+如上，Runloop Mode实际上是Source, Timer, Observer的集合，不同的Mode把不同组的Source, Timer, Observer隔绝开来，Runloop在某一时刻只能跑在在一个Mode，处理这Mode中的Source, Timer, Observer  
+五个Mode分别是:  
+- NSDefaultLoopMode  (公开)  
+- NSConnectionReplyMode  
+- NSModalPanelLoopMode  
+- NSEventTrackingRunLoopMode  
+- NSRunLoopCommonModes  (公开)    
+
+#### Runloop相关的坑
+日常中，与Runloop接触最近的可能就是通过NSTimer了，一个Timer一次只能加入到一个Runloop中。通常就是加入到当前的Runloop的default mode中，而ScrollView在用户滑动时，主线程RunLoop会转到UITrackingRunLoopMode。而这个时候，Timer就不会运行  
+
 #### 错误代码
 - 阻塞主线程  
 - 将UI操作放在非主线程
