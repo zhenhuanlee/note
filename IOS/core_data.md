@@ -14,3 +14,14 @@
 6. 从数据库获取对象  
 7. 更新数据  
 8. 删除数据  
+
+#### [实例](https://www.raywenderlich.com/145809/getting-started-core-data-tutorial)
+[代码](https://github.com/pumpkin2011/CoreData)  
+```objective-c
+// 通过AppDelegate来获取当前的NSManagedObject
+AppDelegate *appDelegate = (AppDelegate * )[[UIApplication sharedApplication] delegate];
+NSManagedObjectContext *managedContext = [[appDelegate persistentContainer] viewContext];
+NSEntityDescription *entity = [NSEntityDescription entityForName:@"Person" inManagedObjectContext:managedContext];
+NSManagedObject *person = [[NSManagedObject alloc] initWithEntity:entity insertIntoManagedObjectContext:managedContext];
+[person setValue:name forKey:@"name"];
+```
