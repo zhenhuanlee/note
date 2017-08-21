@@ -7,7 +7,7 @@ typedef char * MyString;        // 给char * 取别名为MyString
 
 typedef struct Person
 {
-  char *name
+  char * name
 }MyPerson;  // 给Person结构体取别名为MyPerson。使用：MyPerson p = {"Jack"};
 
 typedef enum Gender
@@ -17,7 +17,7 @@ typedef enum Gender
 } MyGender;   // 给Gender枚举类型取别名为MyGender。使用：MyGender g = Man;
 
 typedef void(^MyBlock) (int a, int b);  // 给block取别名为MyBlock
-typedef int(*MyFunction) (int a, int b); // 给指向函数的指针取别名为MyFunction
+typedef int(* MyFunction) (int a, int b); // 给指向函数的指针取别名为MyFunction
 ```
 
 #### define
@@ -313,9 +313,9 @@ iOS程序启动完毕后，创建的第一个视图就是`UIWindow`，接着创�
   - (BOOL)becomeFirstResponder;
   // Touch Event
   - (void)touchesBegan:(NSSet<UITouch > )touches withEvent:(UIEvent )event;
-  - (void)touchesMoved:(NSSet<UITouch *> )touches withEvent:(UIEvent )event;
-  - (void)touchesEnded:(NSSet<UITouch *> )touches withEvent:(UIEvent )event;
-  - (void)touchesCancelled:(NSSet<UITouch *> )touches withEvent:(UIEvent )event;
+  - (void)touchesMoved:(NSSet<UITouch * > )touches withEvent:(UIEvent )event;
+  - (void)touchesEnded:(NSSet<UITouch * > )touches withEvent:(UIEvent )event;
+  - (void)touchesCancelled:(NSSet<UITouch * > )touches withEvent:(UIEvent )event;
   // Motion Event
   - (void)motionBegan:(UIEventSubtype)motion withEvent:(UIEvent )event NS_AVAILABLE_IOS(3_0);
   - (void)motionEnded:(UIEventSubtype)motion withEvent:(UIEvent )event NS_AVAILABLE_IOS(3_0);
@@ -326,3 +326,38 @@ iOS程序启动完毕后，创建的第一个视图就是`UIWindow`，接着创�
 
   由此可见，`UIResponder`对象可以处理`TouchEvent`,`MontionEvent`,`Remote Control Event`和`nextResponder`
   其中`nextResponder`可以获取到下一个关联的`Responder`，`Responder`对象正是关联`nextResponder`引用组成了一个Responder链，我们称之为The Responder Chain，系统事件会沿着这个`Responder Chain`传播到`nextResponder`，直到最后一个`Responder`,如果依然没有处理该事件，事件就会被舍弃。当然系统必须找到第一个`Responder`，即`First Responder`   
+
+#### Strong, Weak, Retain, Assign
+- `assign` 用于非指针变量   
+  用于基础数据类型（如NSInteger）和C数据类型（int,float,double,char等），还有id，如：  
+  ```objective-c
+  @property(nonatomic, assign)int number
+  @property(nonatomic, assign)id className; // id必须用assign
+  ```
+  > 前面不加`*`就用assign  
+
+- `retain` 用于指针变量  
+  用于指针变量。定义了一个变量，然后这个变量在程序的运行过程中会被更改，并且影响到其他方法。一般是用于字符串(NSString, NSMutableString)，数组(NSArray, NSMutableArray)，字典对象，视图对象(UIView)，控制器对象(UIViewController)等  
+  如：  
+  ```objective-c
+  @property (nonatomic, retain) NSString *myString;
+  @property (nonatomic, Retain) UIView *myView;
+  @property (nonatomic, retain) UIViewController *myViewController;
+  ```
+  > 有ARC，可以使用retain，系统会自动释放内存，在XCode4.3之上，`retain`和`strong`是一样的  
+
+- `strong` & `weak`   
+  ```objective-c
+  @property(nonatomic, strong) MyClass *myObject;
+  @property(nonatomic, retain) MyClass *myObject;
+  // 上面两个是等价的  
+  @property(nonatomic, weak) id<RNNewsFeedCellDelegate> delegate;
+  @property(nonatomic, assign) id<RNNewsFeedCellDelegate> delegate;
+  // 上面两个等价
+  ```
+  现在系统自动生成的属性都是用`weak`来修饰的  
+  > 现在有ARC了，建议放弃`retain`改用`weak`  
+
+- `copy`  
+  据说效果和`retain`差不多，唯一区别就是，`copy`用于`NSString`而不是`NSMutableString`  
+  竟然又说，一个类继承了`NSObject`，那么这个类里面的属性需要使用`copy`  
