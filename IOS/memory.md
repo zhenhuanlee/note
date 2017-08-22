@@ -139,3 +139,6 @@ CFRelease(fontRef);
 - `__bridge`：只做类型转换，不修改相关对象的引用计数，原来的Core Foundation对象在不用时，需要调用`CFRelease`方法  
 - `__bridge_retained`：类型转换后，将相关对象的引用+1，原来的Core Foundation对象在不用时，需要调用`CFRelease`方法  
 - `__bridge_transfer`：类型转换后，将该对象的引用计数交给ARC管理，Core Foundation对象在不用时，不再需要调用CFRelease方法  
+
+
+#### [和block循环引用说再见](http://blog.csdn.net/Lotheve/article/details/51992386)
