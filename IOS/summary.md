@@ -361,3 +361,8 @@ iOS程序启动完毕后，创建的第一个视图就是`UIWindow`，接着创�
 - `copy`  
   据说效果和`retain`差不多，唯一区别就是，`copy`用于`NSString`而不是`NSMutableString`  
   竟然又说，一个类继承了`NSObject`，那么这个类里面的属性需要使用`copy`  
+
+- 什么情况使用weak关键字，相比assign有什么不同  
+  什么情况用weak？  
+    1. 在ARC中，在有可能出现循环引用的时候，往往通过在其中一端使用ewak来解决，比如:delegate代理
+    2. 自身已经对它进行过一次强引用，没有必要再强引用一次，此时也会使用weak，自定义IBOutlet控件属性一般也使用weak；当然，也可以使用strong 
