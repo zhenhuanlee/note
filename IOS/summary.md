@@ -364,5 +364,8 @@ iOS程序启动完毕后，创建的第一个视图就是`UIWindow`，接着创�
 
 - 什么情况使用weak关键字，相比assign有什么不同  
   什么情况用weak？  
-    1. 在ARC中，在有可能出现循环引用的时候，往往通过在其中一端使用ewak来解决，比如:delegate代理
-    2. 自身已经对它进行过一次强引用，没有必要再强引用一次，此时也会使用weak，自定义IBOutlet控件属性一般也使用weak；当然，也可以使用strong 
+    1. 在ARC中，在有可能出现循环引用的时候，往往通过在其中一端使用weak来解决，比如:delegate代理
+    2. 自身已经对它进行过一次强引用，没有必要再强引用一次，此时也会使用weak，自定义IBOutlet控件属性一般也使用weak；当然，也可以使用strong
+  不同点：  
+    1. `weak`此特质表明该属性定义了一种"非拥有关系"(nonowning relationship)。为这种属性设置新值时，设置方法既不保留新值，也不释放旧值。此特质同assign类似，然而在属性所指的对象遭到摧毁时，属性值也会清空(nil out)。而`assign`的“设置方法”只会执行针对“纯量类型”(scalar type，例如CGFloat或者NSInteger等)的简单赋值操作。  
+    2. `assign`可以用非OC对象，而`weak`必须用于OC对象  
