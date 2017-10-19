@@ -46,4 +46,67 @@
 > 如：圆角矩形对象的基地址是 0x1000，则isa实例变量的地址是 0x1000 + 0，即位于 0x1000 位置。isa的值占四个字节，因此，下一个失恋变量的起始地址位于4个偏移位置之后，即位于 0x1000 + 4。每个实例变量与对象的基地址都有一个偏移位置  
 > 如果要访问`fillColor`实例变量，编译器生成代码并得到存储`self`的位置值，然后加上偏移量(本例为4)，得到指向存储变量值的位置  
 
-### 复合
+### 第7章 深入了解Xcode
+Xcode自动提示，名称旁边的彩色方框标识这个符号的类型：E表示枚举、f表示函数、#表示#define指令、m表示方法、C表示类  
+
+### Foundation Kit快速教程
+#### 8.1 一些有用的数据类型  
+为什么`NSPoint`，`NSSize`是struct而不是对象->因为性能。GUI程序会用到许多临时的点、大小和矩形来完成工作。所有的OC对象都是动态分配的，而动态分配是一个代价较高的操作，会消耗大量的时间。  
+
+#### 8.2 字符串
+Object-C运行时生成一个类的时候，会创建一个代表该类的**类对象**。类对象包含了：  
+- 指向超类的指针  
+- 类名  
+- 指向方法列表的指针  
+- 一个long型数据，为新创建的类实例对象指定大小  
+> 一般类方法都是用来创建实例的，我们称这种用来创建新对象的类方法为工厂方法  
+
+##### 8.2.5 不区分大小写的比较
+`compare:options:`options的参数是一个**位掩码(mask)** ，可以使用位或运算符(|)来添加选项标记  
+
+#### 8.4 集合家族
+NSArray是一个cocoa类，有两个限制：  
+1. 只能存储OC对象，不能存储C中的基本数据类型，如int、float、enum、struct等  
+2. 不能存储nil  
+
+#### 8.5 各种数值
+NSArray 和 NSDictionary只能存储对象，而不能直接存储任何基本类型数据。但是可以通过对象来封装基本数据  
+
+##### 8.5.1 NSNumber
+用来包装(即以对象的方式实现)基本数据类型  
+可以使用下列方法创建新的NSNumber对象（装箱 - boxing）  
+```Objective-C
++ (NSNumber * ) numberWithChar: (char)value;
++ (NSNumber * ) numberWithInt: (int)value;
++ (NSNumber * ) numberWIthFloat: (float)value;
++ (NSNumber * ) numberWithBool: (BOOL)value;
+```
+以下的方法可以重新获得（取消装箱 - unboxing）  
+```Objective-C
+- (char) charValue;
+- (int) intValue;
+- (float) floatValue;
+- (BOOL) boolValue;
+- (NSString * ) stringValue;
+```
+
+##### 8.5.2 NSValue
+NSNumber实际上是NSValue的子类， NSValue可以包装任意值  
+```Objective-C
++ (NSValue * ) valueWithBytes: (const void * )value objCType: (const char * )type
+// cocoa提供了将常用struct数据转换成nsvalue的方法
++ (NSValue * ) valueWithPoint: (NSPoint) point;
++ (NSValue * ) valueWithSize: (NSSize) size;
++ (NSValue * ) valueWithRect: (NSRect) rect;
+- (NSPoint)pointValue;
+- (NSSize)sizeValue;
+- (NSRect)rectValue;
+```
+
+##### 8.5.3 NSNull
+Cocoa里最简单的类  
+```Objective-C
++ (NSNull * )null;
+
+[array addObject:[NSNull null]];
+```
