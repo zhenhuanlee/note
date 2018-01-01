@@ -57,4 +57,11 @@ web、app等其他可以通过web3.js和Geth进行交互
   解决双花问题  
   任何一笔TX，都需要区块的确认，如果失败会被回滚  
 
-### 
+### 创建私有链  
+- `geth --datadir './' init genesis.json `
+  - `--datadir` 需要手动指定，否则就会被当成是是公有链的节点
+- `geth --datadir "./" --nodiscover console 2>>geth.log`  
+  - `--nodiscover` 防止其他节点查找，加入  
+  - `console` 进入交互  
+  - `2>>geth.log` 将日志输出  
+-
