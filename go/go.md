@@ -64,3 +64,57 @@ func main() {
 - Go语言中，使用大小写来决定该 常量，变量，类型，接口，结构，函数是否可以被外部包所调用：  
     - 小写即为 **private**  
     - 大写即为 **public**  
+
+#### Go基本类型  
+- bool
+  - 长度： 1字节  
+  - 取值范围： true, false  
+  - 注意事项： 不可以用数字代表true false  
+- 整形: int/ uint(无符号整形)    
+  - 根据运行平台可能是32或64位  
+- 8位整形: int8/ uint8  
+  - 长度： 1字节  
+  - 取值范围： -128~127 / 0~255
+- 字节型： byte(uint8 别名)  
+- 浮点型： float32 / float64  
+  - 长度： 4/8字节  
+  - 小数位： 精确到7/15位小数  
+- 复数： complex64 / complex128  
+- 足够保存指针的32位或64位证书: uintptr
+- 其他值类型  
+  - array  struct  string  
+- 接口类型： interface  
+- 引用类型  
+  - slice  map  chan  
+- 函数类型: func  
+
+#### 类型零值  
+通常并不等于空值，而是当变量被声明为某种类型后的默认值  
+  - 值类型的默认值 0
+  - bool的默认值 false  
+  - string的默认值  空字符串  
+
+#### 变量声明  
+```swift
+var (
+  aaa = "hello"
+  sss, bbb = 1, 2
+)
+//  局部变量不能用var()方式简写  
+var a, b, c, d int
+a, b, c, d = 1, 2, 3, 4
+var e, f, g, h int = 5, 6, 7, 8
+var i, j, k, l = 1, 2, 3, 4
+i, m, q := 1, 2, 3, 4
+```
+#### 变量的类型转换  
+- Go中不存在隐式转换，所有类型必须显示声明  
+- 转换只能发生在两种相互兼容的类型之间  
+- 类型转换的格式  
+```swift
+//  <TypeOfValueA>(<ValueB>)  
+
+var a float32 = 1.1
+b := int(a)
+```
+
