@@ -136,3 +136,77 @@ b = 65
 c = 2
 d = 3
 ```
+
+#### 指针
+Go虽然保留了指针，蛋不支持指针运算以及`->`运算，而直接采用`.`选择符来操作指针目标对象的成员  
+- 操作符`&`取变量地址，使用`*`通过指针间接访问目标对象  
+- 默认值为nil而非NULL  
+
+#### if
+```swift
+if a := 1; a > 0 {
+  ...
+}
+```
+
+#### for
+```swift
+for {
+  ...
+}
+
+for a < 1 {
+  ...
+}
+
+for i := 1; i < 10; i++ {
+  ...
+}
+```
+
+#### switch
+```swift
+// 不用写break
+// 有fallthrough语句  
+switch a {
+case 0:
+  ...
+case 1:
+  ...
+default:
+  ...
+}
+
+switch {
+case a == 0:
+  ...
+  fallthrough
+case a > 0:
+  ...
+default:
+  ...
+}
+
+switch a:=1; {
+  ...
+}
+```
+
+#### 跳转语句：goto  break  continue
+- 三个语法都可以配合标签使用  
+- `Break` & `Continue`配合标签可用于多层循环的跳出  
+- `Goto`是调整执行位置，与其它两个语句配合标签的结果并不相同  
+```swift
+func main() {
+LABEL1:
+	for {
+		for i := 0; i < 10; i++ {
+			if i > 3 {
+				break LABEL1
+			}
+		}
+	}
+}
+```
+
+
