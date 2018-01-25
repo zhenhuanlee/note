@@ -281,4 +281,43 @@ s1 := make([]int, 3, 10)
   - 如果超过追加到的slice的容量，则将重新分配数组并拷贝原始数据  
 
 - copy  
-  - 
+  ```go
+  s1 := int[]{1,2,3,4}
+  s2 := int[]{4,5,6}
+  copy(s1, s2)
+  fmt.Println(s1) // => [4 5 6 4]
+  copy(s2, s1)
+  fmt.Println(s1) // => [1 2 3]
+  ```
+
+#### map
+- key-value对  
+- key必须是支持`==`比较运算的类型，不可以是函数，map或者slice  
+- map查找比线性搜索快很多，但是比索引(数组/slice 下标)访问数据的类型慢100倍  
+- map使用`make()`创建，支持`:=`简写方式  
+  - `make([keyType]valueType, cap)`cap表容量，可省略  
+- 超出容量会自动扩容，但尽量提供一个合适的初始值  
+- 使用`len()`获取元素个数  
+- 键值对不存在时自动添加，使用`delete()`删除  
+- 使用`for range`对map和slice进行迭代操作  
+
+```go
+var m map[int]map[int]string
+m = make(map[int]map[int]string)
+a, ok = m[2][1]
+fmt.Println(a, ok)
+// 多返回值，第二个返回值是bool，判断键值对存不存在  
+// 上面的情况就是不存在的，作为value的map没有初始化  
+```
+
+```go
+sm := make([]map[int]string, 5)
+for _, v := range sm {
+  v := make([int]string, 1)
+  v[1] = "OK"
+  fmt.Println(v)
+}
+fmt.Println(sm)
+// 因为v只是一个拷贝，所以并不是改变sm  
+```
+
