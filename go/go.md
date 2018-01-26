@@ -321,3 +321,154 @@ fmt.Println(sm)
 // 因为v只是一个拷贝，所以并不是改变sm  
 ```
 
+#### 函数function
+- Go函数不支持嵌套，重载和默认参数  
+- 支持：无需声明原型，不定长度变参，多返回值，命名返回值参数，匿名函数，闭包  
+- 函数也可以作为一种类型使用  
+- `defer`析构函数
+  - 即使函数发生严重错误也会执行  
+  - 支持匿名函数的调用  
+  - 常用于资源清理，文件关闭，解锁以及记录时间等操作  
+  - 通过与匿名函数的配合可在return之后修改函数的计算结果  
+  - 如果函数体内某个变量作为`defer`时匿名函数的参数，则在定义defer时即已经获得了拷贝，否则则是引用某个变量的地址  
+  - Go没有异常机制，但有`panic/recover`模式来处理错误  
+  - Panic可以再任何地方引发，但recover只有在defer调用的函数中有效  
+
+```go
+fmt.Println("a")
+defer fmt.Println("b")
+defer fmt.Println("c")
+// a c b
+for i := 0; i < 3; i++ {
+  defer func() {
+    fmt.Println(i)
+  }() // ()调用这个函数
+}
+// 3 3 3 
+// 闭包的特性，i一直是个引用，执行的时候已经是3了
+```
+
+```go
+
+func A() {
+	fmt.Println("func a")
+}
+
+func B() {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("recover in b")
+		}
+	}()
+	panic("panic in b")
+}
+
+func C() {
+	fmt.Println("fun c")
+}
+
+A()
+B()
+C()
+// func a
+// recover in b
+// fun c
+```
+
+#### 结构struct
+- Go的struct与C的struct非常相似，且Go没有class  
+- 使用type<name>struct()定义结构，名称遵循可见性规则  
+- 支持指向自身的指针类型成员  
+- 支持匿名结构，可用作成员或定义成员变量  
+- 匿名结构也可以用于map的值  
+- 可以使用字面值对结构进行初始化  
+- 允许通过指针来读写结构成员  
+- 相同类型的成员可进行直接拷贝赋值  
+- 支持==与!=比较运算，但不支持>或<  
+- 支持匿名字段，本质上是定义了以某个类型名为名称的字段  
+- 嵌入结构作为匿名字段看起来像继承，但并不是  
+- 可以使用匿名字段指针  
+
+```go
+type person struct {
+	Name string
+	Age  int
+}
+
+func main() {
+	a := person{}
+	a.Name = "a"
+	a.Age = 14
+	fmt.Println(a)
+}
+
+a := person{
+  Name: "a",
+  Age:  19,
+}
+```
+结构体的指针操作时，可以直接操作不用取值`*`  
+初始化时就应该使用指针，否则是值拷贝  
+
+```go
+// 匿名结构
+a := &struct {
+  Name string
+  Age  int
+}{
+  Name: "adf",
+  Age:  19,
+}
+fmt.Println(a)
+```
+
+```go
+// 嵌套匿名结构
+type person struct {
+	Name    string
+	Age     int
+	Contact struct {
+		Phone, City string
+	}
+}
+
+func main() {
+	a := person{Name: "aaa", Age: 12}
+	a.Contact.Phone = "123123"
+	a.Contact.City = "NJ"
+	fmt.Println(a)
+}
+```
+
+```go
+//匿名字段
+type person struct {
+	string
+	int
+}
+
+func main() {
+	a := person{"aaa", 12}
+	fmt.Println(a)
+}
+```
+
+```go
+// 嵌入结构(相当于继承，但不是)
+type student struct {
+	human
+	Name string
+	Age  int
+}
+
+func main() {
+	a := student{
+		Name: "JOE",
+		Age:  10,
+    humane: human{Sex: 0}
+	}
+  a.human.Sex = 123
+	a.Sex = 123
+	fmt.Println(a)
+}
+```
