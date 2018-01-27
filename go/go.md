@@ -472,3 +472,420 @@ func main() {
 	fmt.Println(a)
 }
 ```
+
+#### 方法method
+- Go中虽然没有class，但依旧有method  
+- 通过显示说明receiver来实现与某个类型的组合  
+- 只能为同一个包中的类型定义方法  
+- Receiver可以是类型的值或者指针  
+- 不存在方法重载  
+- 可以使用值或指针来调用方法，编译器会自动完成转换  
+- 从某种意义上来说，方法是函数的语法糖，因为Receiver其实就是方法所接收的第一个参数(method value VS. method expression)  
+- 如果外部结构和嵌入结构存在同名方法，则优先调用外部结构的方法  
+- 类型别名不会拥有底层类型所附带的方法  
+- 方法可以调用结构中的非公开字段  
+
+```go
+type A struct {
+  Name string
+}
+
+func (a A) Print() {
+	fmt.Println("A")
+}
+
+func main() {
+	a := A{}
+  a.Print() // method value
+	A.Print(a) // method expression
+	(*A).Print(&a)
+}
+```
+
+```go
+// 访问私有变量
+type A struct {
+  name string // 私有
+}
+
+func main() {
+  a := A{}
+  a.Print()
+  fmt.Println(a.name) // 访问了私有字段
+  // 因为私有只是相对包而言
+}
+
+func (a *A) Print() {
+  a.name = "123"
+  fmt.Println(a.name) // 访问了私有字段
+}
+```
+
+#### 接口interface
+- 接口是一个或多个方法签名的集合  
+- 只要某个类型拥有该接口的所有方法签名，即算实现该接口，无需显示声明实现了哪个接口，这成为Structural Typing  
+- 接口只有方法声明，没有实现，没有数据字段  
+- 接口可以匿名嵌入其他接口，或嵌入到结构中  
+- 将对象赋值给接口时，会发生拷贝，而接口内部存储的是指向这个复制品的指针，既无法修改复制品的状态，也无法获取指针  
+- 只有当接口存储的类型和对象都为nil时，接口才等于nil  
+- 接口调用不会做receiver的自动转换  
+- 接口同样支持匿名字段方法  
+- 接口也可以实现类似OOP中的多态  
+- 空接口可以作为任何类型数据的容器  
+
+```go
+type USB interface {
+	Name() string //name方法，返回一个字符串
+	Connect()     //没有返回值
+}
+
+type PhoneConnecter struct {
+	name string
+}
+
+func (pc PhoneConnecter) Name() string {
+	return pc.name
+}
+
+func (pc PhoneConnecter) Connect() {
+	fmt.Println("Connect:", pc.name)
+}
+
+func Disconnect(usb USB) {
+	fmt.Println("Disconnected")
+}
+
+func main() {
+	a := PhoneConnecter{"PhoneConnecter"} // 实现了USB接口
+	a.Connect()
+	Disconnect(a)
+}
+```
+##### 嵌入接口
+```go
+type Connecter interface {
+	Connect()
+}
+
+type USB interface {
+	Name() string //name方法，返回一个字符串
+	Connecter     // 嵌入了
+}
+```
+##### 类型断言 ok pattern
+```go
+func Disconnect(usb USB) {
+  if pc, ok := usb.(PhoneConnecter); ok { // 类型断言 判断是不是PhoneConnecter类型
+		fmt.Println("Disconnected:", pc.name) 
+		return
+	}
+	fmt.Println("Unknown device.")
+}
+```
+
+##### type switch 
+```go
+// 当类型比较多时
+switch v := usb.(type) {
+case PhoneConnecter:
+  fmt.Println("xxx", v.name)
+default:
+  fmt.Println("yyy")
+}
+```
+
+##### 接口转换
+只能向下转换
+```go
+type USB interface {
+	Name() string //name方法，返回一个字符串
+	Connecter     // 嵌入了
+}
+
+type Connecter interface {
+	Connect()
+}
+
+type PhoneConnecter struct {
+	name string
+}
+
+func main() {
+	pc := PhoneConnecter{"PhoneConnecter"}
+	var a Connecter
+	a = Connecter(pc) // 强制类型转换
+	a.Connect()
+}
+```
+
+#### 反射 reflection
+```go
+package main
+
+import (
+	"fmt"
+	"reflect"
+)
+
+type User struct {
+	Id   int
+	Name string
+	Age  int
+}
+
+func (user User) Hello() {
+	fmt.Println("Hello")
+}
+
+func main() {
+	u := User{1, "OK", 12}
+	Info(u)
+}
+
+func Info(o interface{}) { // 参数类型是一个空接口
+	t := reflect.TypeOf(o)
+	fmt.Println("Type: ", t.Name())
+	v := reflect.ValueOf(o)
+	fmt.Println("Fields:")
+
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		val := v.Field(i).Interface()
+		fmt.Printf("%6s: %v = %v\n", f.Name, f.Type, val)
+	}
+
+  for i := 0; i < t.NumMethod(); i++ {
+		m := t.Method(i)
+		fmt.Printf("%6s: %v\n", m.Name, m.Type)
+	}
+
+}
+```
+
+##### 反射匿名或嵌入字段
+```go
+package main
+
+import (
+	"fmt"
+	"reflect"
+)
+
+type User struct {
+	Id   int
+	Name string
+	Age  int
+}
+
+func main() {
+	u := User{1, "OK", 12}
+	Set(&u)
+	fmt.Println(u)
+}
+
+func Set(o interface{}) {
+	v := reflect.ValueOf(o)
+
+	if v.Kind() == reflect.Ptr && !v.Elem().CanSet() {
+		fmt.Println("xxx")
+	} else {
+		v = v.Elem()
+	}
+	if f := v.FieldByName("Name"); f.Kind() == reflect.String {
+		f.SetString("Bye")
+	}
+}
+```
+
+##### 如何通过反射调用方法
+```go
+package main
+
+import (
+	"fmt"
+	"reflect"
+)
+
+type User struct {
+	Id   int
+	Name string
+	Age  int
+}
+
+func main() {
+	u := User{1, "OK", 12}
+	t := reflect.ValueOf(u)
+	mv := t.MethodByName("Hello")
+
+	args := []reflect.Value{reflect.ValueOf("Joe")}
+	mv.Call(args)
+}
+
+func (u User) Hello(name string) {
+	fmt.Println("hello", name, "my name is", u.Name)
+}
+```
+
+
+#### 并发concurrency
+- 从源码解析来看，goroutine只是由官方实现的超级"线程池"而已，每个实例4-5KB的内存占用，大幅减少创建和销毁的开销，是制造Go号称高并发的根本原因，另外goroutine的简单易用，也在语言层面上给与了开发者巨大的便利  
+- 并发主要由切换时间片来实现，并行则是直接利用多核实现多线程的运行，但Go可以设置使用核数，以发挥多核计算机的能力  
+- Goroutine奉行通过通信来共享内存，而不是共享内存来通信  
+
+##### channel
+- channel是goroutine沟通的桥梁，大都是堵塞同步的  
+- 通过`make`创建，`close`关闭  
+- channel是引用类型  
+- 可以使用for range来迭代不断操作channel  
+- 可以设置单向或者双向通道  
+- 可以设置缓存大小，在未被填满前不会发生堵塞  
+
+##### select
+- 可以处理一个或多个channel的发送与接收  
+- 同时有多个可用的channel时按随机顺序处理  
+- 可用空的select来阻塞main函数  
+- 可以设置超时  
+
+```go
+package main
+
+import (
+	"fmt"
+	// "time"
+)
+
+func main() {
+	c := make(chan bool)
+	go func() {
+		fmt.Println("Go!")
+		c <- true
+	}()
+	<-c // 运行到此堵塞，等待线程中的传入
+}
+
+```
+
+```go
+package main
+
+import (
+	"fmt"
+	"runtime"
+	"sync"
+	// "time"
+)
+
+func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	wg := sync.WaitGroup{}
+	wg.Add(10)
+
+	for i := 0; i < 10; i++ {
+		go Go(&wg, i)
+	}
+
+	wg.Wait()
+}
+
+func Go(wg *sync.WaitGroup, index int) {
+	a := 1
+	for i := 0; i < 100000000; i++ {
+		a += 1
+	}
+	fmt.Println(index, a)
+
+	wg.Done()
+}
+```
+
+```go
+// select
+package main
+
+import (
+	"fmt"
+	// "runtime"
+	// "sync"
+	// "time"
+)
+
+func main() {
+	c1, c2 := make(chan int), make(chan string)
+	o := make(chan bool)
+	go func() {
+		for {
+			select {
+			case v, ok := <-c1:
+				if !ok {
+					o <- true
+					break
+				}
+				fmt.Println("c1", v)
+			case v, ok := <-c2:
+				if !ok {
+					o <- true
+					break
+				}
+				fmt.Println("c2", v)
+			}
+		}
+	}()
+
+	c1 <- 1
+	c2 <- "hi"
+	c1 <- 3
+	c2 <- "hel"
+
+	close(c1)
+	close(c2) // 为了不复杂化并发程序，应该在c1关闭时就退出select，所以这行应该删掉  
+
+	<-o
+}
+```
+```go
+// select 2
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	c := make(chan int)
+
+	go func() {
+		for v := range c {
+			fmt.Println(v)
+		}
+	}()
+
+	for i := 0; i < 10; i++ {
+		select {
+		case c <- 0:
+		case c <- 1:
+		}
+	}
+}
+
+```
+
+```go
+// select 设置超时
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	c := make(chan bool)
+	select {
+	case v := <-c:
+		fmt.Println(v)
+	case <-time.After(3 * time.Second): // time.After()返回的是一个(chane time)
+		fmt.Println("timeout")
+	}
+}
+
+```
