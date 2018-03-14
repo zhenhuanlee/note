@@ -15,3 +15,7 @@
 - [JS Bin](http://jsbin.com)
 - [Tinkerbin](http://tinkerbin.com/)
 - [Rendur](http://rendur.com/)
+
+# daemons 
+- pm2 -n 'geth' -f start geth -x -- --fast --rinkeby --cache=512 --datadir=/ethereum --rpc --rpcaddr=127.0.0.1 --rpcport=101 --rpcapi "db,eth,net,web3,personal"
+
