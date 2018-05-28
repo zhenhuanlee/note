@@ -79,3 +79,16 @@ OP_CHECKSIG"
 - 锁定脚本是一个放置在输出上面的话费条件：它指定了今后话费这笔输出必须要满足的条件，由于锁定脚本往往含有一个公钥或者比特币地址  
 - 解锁脚本是一个解决或满足被锁定脚本在一个输出上设定的话费条件的脚本，它将允许输出被消费，解锁脚本是每一笔比特币交易输入的一部分，而且往往含有一个由比特币钱包(通过用户的私钥)生成的数字签名  
 - 每个比特币节点会通过同时执行锁定和解锁脚本来验证一笔交易，每个输入都包含一个解锁脚本，并引用了之前存在的UTXO。验证软件将复制解锁脚本，检索输入所引用的UTXO，并从该UTXO复制锁定脚本，然后依次执行解锁和锁定脚本。  
+
+#### 6.4.4 P2PKH (pat to public key hash)
+比特币网络处理的大多数交易都是由"付款至公钥哈希"(或P2PKH)脚本锁定的输出，这些输出都含有一个锁定脚本，将输入锁定为一个公钥哈希(比特币地址)  
+由P2PKH脚本锁定的输出可以通过提供一个公钥和由相应私钥创建的数字签名来解锁(使用)  
+`OP_DUP OP_HASH160 <Cafe Public Key Hash> OP_EQUALVERIFY OP_CHECKSIG`  
+相应的解锁脚本是：  
+`<Cafe Signature> <Cafe Public Key>`  
+将两个脚本结合起来可以形成如下组合验证脚本：  
+```
+<Cafe Signatur> <Cafe Public Key>OP_DUP OP_HASH160
+<Cafe Public Key Hash> OP_EQUALVERIFY OP_CHECKSIG
+```
+

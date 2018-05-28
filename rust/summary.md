@@ -29,6 +29,48 @@ fn average(values: &[f64]) -> f64 {
 }
 ```
 
+#### 复合类型
+##### tuple
+```rust
+    let tup1: (i32, f64, u8) = (12, 2.2, 9);
+    println!("{:?}", tup1);
 
+    let x = tup1.0;
+    let y = tup1.1;
 
+    println!("x: {}, y: {}", x, y);
+```
+
+##### array
+- 大小不可改（vector可以）  
+```rust
+let a = [1,2,3,4,5];
+
+println!("array: {:?}, first: {}, second: {}", a, a[0], a[1]);
+```
+
+#### function
+- 函数体
+```rust
+let x = 5;
+let y = {
+    let x = 3;
+    x + 1
+};
+
+println!("x: {}, y: {}",x, y);
+```
+
+#### control flow
+##### 可以有赋值操作
+```rust
+let condition = true;
+let number = if condition {
+    5
+} else {
+    6
+};
+
+println!("number: {}", number);
+```
 
