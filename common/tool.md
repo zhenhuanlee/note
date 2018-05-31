@@ -7,6 +7,14 @@
 - ltrace: 查询库调用
 - [NCurses Disk Usage](https://dev.yorhel.nl/ncdu): 查看文件占用
 - ngrok: 反射代理，外网访问局域网
+### 网络
+- nethogs: 按进程查看流量占用  
+- iptraf: 按连接/端口查看流量
+- ifstat: 按设备查看流量  
+- ethtool: 诊断工具  
+- tcpdump: 抓包工具  
+- ss: 连接查看工具  
+- 其他: dstat, slurm, nload, bmon  
 
 # web在线调试
 - [jsFiddle](https://jsfiddle.net/)
