@@ -91,5 +91,13 @@ rust 内存是自动分配的，当超过作用域，内存自动回收（超过
 2. 引用必须总是合法  
     - 方法不允许返回指针(超过作用域就被`drop`，会变成空悬指针)  
 
+#### collection
+有一些可以在运行时动态增和减的：  
+- vector: store a variable number of values next to each other  
+- String: a collection of characters  
+- hash map  
+##### vector 
+要注意ownership和borrow的特性  
+
 
 

@@ -57,6 +57,12 @@
   > data_container 是上面那个创建的容器的名字  
   > 在linux命令行运行mount可以查看   
 
+21. push一个镜像
+```
+  docker tag my_image $DOCKER_ID_USER/my_image
+  docker push $DOCKER_ID_USER/my_image
+```
+
 #### docker-compose
 
 1. 运行docker-compose `docker-compose up`  
