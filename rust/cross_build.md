@@ -41,4 +41,49 @@ cargo build --target=armv7-unknown-linux-gnueabihf
     - Windows: `gnu` or `MSVC`  
 
 ##### C 交叉工具链
+`gcc`交叉编译仅针对一个`triple`，这个`triple`会作为所有的工具链命令的前缀，`ar`，`gcc`等。这有助于区分本地编译所使用的工具，如`arm-none-eabi-gcc`。
+这里让人困惑的地方是`triples`可能会非常的随意，所以你的C交叉编译器可能会有一个和你的`triple`不一样的前缀，比如：  
+    - linux中，arm的交叉编译包是`arm-linux-gnueabihf-gcc`  
+    - Exherbo中的t`riple`则是`arm-unknown-linux-gnueabihf`，和其他的都不匹配，但是他们指向的是同一组系统  
+确认你的工具链是否正确的最好的方法是交叉编译一个C程序，然后在目标系统上跑一下  
 
+如何获得C交叉编译工具链，这取决于系统。一些linux发行版提供了打包好的交叉编译器，至于其他的话，可能就得自己编译交叉编译器了，[crosstool-ng](https://github.com/crosstool-ng/crosstool-ng)这个工具可以帮上点忙。linux到OSX的话看看这个[osxcross](https://github.com/tpoechtrager/osxcross)  
+
+下面是一下打包好的交叉编译器的例子：  
+- `arm-unknown-linux-gnueabi`，ubuntu和Debian提供`gcc-*-arm-linux-gnueabi`包，其中`*`是gcc版本，如`gcc-4.9-arm-linux-gnueabi`  
+- `arm-unknown-linux-gnueabihf`，和上面的差不多，只是把`gnueabi`替换成了`gnueabihf`  
+- OpenWRT设备，`mips-unknown-linux-uclibc`(15.05 and older)和`mips-unknown-linux-musle`(post 15.05)使用[OpenWRT SDK](https://wiki.openwrt.org/doc/howto/obtain.firmware.sdk)  
+- Raspberry Pi，使用[Raspberry tools](https://github.com/raspberrypi/tools/tree/master/arm-bcm2708)  
+
+> C交叉工具链会为目标附带一个交叉编译的libc，需要确认：  
+> - 这个工具链libc和目标的libc相匹配。举例：如果目标使用的是musl libc，那么工具链也必须使用musl libc  
+> - 工具链的libc的ABI和目标的libc是兼容的。这个通常意味着工具链的libc必须目标的libc老，当然版本一致是最好的。
+
+##### 交叉编译了的Rust crates
+大多数的程序都link了`std`库，所以至少需要一个交叉编译了的`std`库去交叉编译目标程序。最简单的方法就是从[official builds](http://static.rust-lang.org/dist/)获取  
+
+`rustup`可以使用`rustuo target add xxx`。
+
+> 如果是nightly，每次更新Rust都需要重新安装cross compiled standard crates  
+
+##### 通过rustc编译
+
+##### 通过cargo编译  
+要使用cargo来交叉编译，必须要先设置合适的linker和archiver，一旦设置，只需要传递`--target`flag，(configuration system)[http://doc.crates.io/config.html]  
+```toml
+# .cargo/config
+[target.arm-unknown-linux-gnueabihf]
+linker = "arm-linux-gnueabihf-gcc"
+# cargo build --target=arm-unknown-linux-gnueabihf
+```
+
+##### 高点
+
+
+###### 跨系统编译  
+找一个跨系统的C交叉编译工具链是比较难的，一个更加简单的方法是试试[Travis CI](https://travis-ci.org/)和[AppVeyor](https://www.appveyor.com/)，来看看作者的[rust-everywhere](https://github.com/japaric-archived/rust-everywhere)  
+
+###### 如果编译纯静态链接
+简单的答案：`cargo build --target x86_64-unknown-linux-musl`    
+对于target是`*-*-linux-gnu*`的来说，rustc总是会编译出一个动态链接到`glibc`和其他libraries的二进制文件  
+rust提供了两个targets`x86_64-unknown-linux-musl`和`i686-unknown-linux-musl`来编译静态链接的二进制，编译出的二进制会静态链接到`MUSL`这个C库  
