@@ -1,4 +1,4 @@
-# Go [反射三定律](https://segmentfault.com/a/1190000006190038)
+<!-- # Go [反射三定律](https://segmentfault.com/a/1190000006190038)
 #### 第一定律
 反射可以将'借口类型变量'转换为'反射类型对象'  
 > 这里反射类型指`reflection.Type`和`reflection.Value`  
@@ -97,4 +97,69 @@ fmt.Println(v.CanSet()) // true
 v.SetFloat(9.1)
 fmt.Println(v) // 9.1
 ```
+ -->
+
+# 反射
+#### API
+```go
+type dog struct {
+	Name   string
+	Age    int
+	Parent *dog
+}
+
+func (dog) Say(sth string) string {
+	// fmt.Println("wang")
+	return sth
+}
+
+a := dog{Name: "haha", Age: 100}
+	t := reflect.TypeOf(a)
+	v := reflect.ValueOf(a)
+	v2 := reflect.ValueOf(&a)
+
+	fmt.Println(t.Name())                    // dog
+	fmt.Println(t.Kind())                    // struct
+	fmt.Println(t.NumField())                // 3
+	fmt.Println(t.NumMethod())               // 1
+	fmt.Println(t.Field(0))                  // {Name main string  0 [0] false}
+	fmt.Println(t.Method(0))                 // {Say  func(main.dog) <func(main.dog) Value> 0}
+	fmt.Println(t.FieldByIndex([]int{2, 1})) // {Age main int  16 [1] false}，嵌套结构，第2个的第一个属性
+	fmt.Println(t.MethodByName("Say"))       // {Say  func(main.dog) <func(main.dog) Value> 0} true
+  fmt.Println(t.Field(0).Tag.Get("json"))  // tagName
+	m, _ := t.MethodByName("Say")
+  fmt.Println(m.Func.Call([]reflect.Value{reflect.ValueOf(dog{}), reflect.ValueOf("laifu")})) // [laifu]
+
+	fmt.Print("\nxxxxxxxxxxxxxnxxxxxxxxxxxxxnxxxxxxxxxxxxx\n\n")
+
+	fmt.Println(t == v.Type())                                                           // true
+	fmt.Println(v.Type())                                                                // main.dog
+	fmt.Println(v.Type().Name())                                                         // dog
+	fmt.Println(v.Field(0))                                                              // haha
+	fmt.Println(v.Field(0).Interface())                                                  // haha, 转换成正射
+	fmt.Println(v.Method(0))                                                             // 0x107c2b0
+	fmt.Println(v.MethodByName("Say"))                                                   // 0x107c2b0
+	fmt.Println(v.MethodByName("Say").Type())                                            // func(string)
+	fmt.Println(v.MethodByName("Say").Kind())                                            // func
+	fmt.Println(v.MethodByName("Say").Type().NumIn())                                    // 需要的参数个数，这里需要1个参数
+	fmt.Println(v.MethodByName("Say").Type().Out(0))                                     // string 第一个返回值的类型
+	fmt.Println(v.Interface())                                                           // {haha 100 <nil>}
+	fmt.Println(v.Kind() == t.Kind())                                                    // true
+	fmt.Println(v.MethodByName("Say").Call([]reflect.Value{reflect.ValueOf("wangcai")})) // [wangcai]
+
+	fmt.Print("\nxxxxxxxxxxxxxnxxxxxxxxxxxxxnxxxxxxxxxxxxx\n\n")
+
+	fmt.Println(v2.Elem())                           // {haha 100 <nil>}, 获取value中的值value
+	fmt.Println(v2.Elem().CanSet())                  // true, 检查当前value中的值是否可以改变
+	v2.Elem().FieldByName("Name").SetString("nihao") //
+	fmt.Println(v2.Elem().FieldByName("Name"))       // nihao
+	fmt.Println(v2.IsValid())                        // true, 用得少
+
+```
+
+#### 助记口诀
+- 有了对象就有了对象的Type  
+- 有了对象就有了对象的Value  
+- 对象的Value和指针的Value可以互转  
+- 正反(射)值可以互转  
 
