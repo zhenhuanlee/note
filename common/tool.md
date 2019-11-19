@@ -27,3 +27,7 @@
 # daemons 
 - pm2 -n 'geth' -f start geth -x -- --fast --rinkeby --cache=512 --datadir=/ethereum --rpc --rpcaddr=127.0.0.1 --rpcport=101 --rpcapi "db,eth,net,web3,personal"
 
+
+## 装机软件
+- [ApiPost](https://www.apipost.cn/) 可以多端协作的 postman  
+- [TablePlus](https://tableplus.com/) 跨平台的 sql client  
