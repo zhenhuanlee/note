@@ -74,8 +74,16 @@ $(TAR):$(OBJ)
 - $@ 所有的目标文件，就是冒号后面的
 - $< 所有的依赖文件的第一个文件  
 ```makefile
-t:s
-    gcc $@ -o $^
+TAR=test
+OBJ=circle.o cube.o main.o
+CC:=gcc
+RMRF:=rm -rf
+
+$(TAR):$(OBJ)
+    $(CC) $^ -o $@
+
+%.o:%.c
+    $(CC) -c $^ -o $@
 ```
 
 #### 第五层 函数
