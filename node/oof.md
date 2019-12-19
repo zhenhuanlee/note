@@ -24,7 +24,9 @@ var newRooms = rooms.map(function(rm) {
 });
 ```
 - 上面的方法会发生内存拷贝，比较好的办法是用持久化的数据结构，复用老数据  
-试着了解`mori.js`库
+试着了解`mori.js`库，实际上使用的是闭包  
+同样的还有个`mutable.js`  
+
 
 #### 高阶函数(闭包？)  
 ```js
